@@ -1,0 +1,79 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
+        env:
+          APP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          APP_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          APP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p build/outputs/release-artifacts
+          TAG_NAME="${{ github.ref_name }}"
+          
+          # 直接定位到 Flutter 默认输出路径并规范重命名
+          APK_DIR="build/app/outputs/flutter-apk"
+          
+          if [ -f "$APK_DIR/app-armeabi-v7a-release.apk" ]; then
+            cp "$APK_DIR/app-armeabi-v7a-release.apk" "build/outputs/release-artifacts/${TAG_NAME}_armeabi-v7a.apk"
+          fi
+          if [ -f "$APK_DIR/app-arm64-v8a-release.apk" ]; then
+            cp "$APK_DIR/app-arm64-v8a-release.apk" "build/outputs/release-artifacts/${TAG_NAME}_arm64-v8a.apk"
+          fi
+          if [ -f "$APK_DIR/app-x86_64-release.apk" ]; then
+            cp "$APK_DIR/app-x86_64-release.apk" "build/outputs/release-artifacts/${TAG_NAME}_x86_64.apk"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            build/outputs/release-artifacts/*.apk
+          generate_release_notes: true # 自动根据 git commit 生成更新日志
+          body: |
+            ## 掌环 ${{ github.ref_name }} 版本发布 🚀
+            
+            ### 📦 下载说明
+            - 针对不同 Android 架构提供了独立拆包，请按需下载：
+              - **arm64-v8a**：绝大多数现代主流 Android 手机（推荐优先选择）
+              - **armeabi-v7a**：部分较旧的 32 位设备
+              - **x86_64**：模拟器或部分特殊平板设备
+            
+            *此发布由 GitHub Actions 自动化流水线构建生成。*
+          token: ${{ secrets.GITHUB_TOKEN }}

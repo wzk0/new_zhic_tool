@@ -111,7 +111,7 @@ class _QuestionBankPageState extends ConsumerState<QuestionBankPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('题库')),
+      appBar: AppBar(),
       body: _QuestionBankBody(
         items: _items,
         loading: _loading,
@@ -180,7 +180,7 @@ class _QuestionBankDirectoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(name)),
+      appBar: AppBar(),
       body: _QuestionBankBody(
         items: items,
         loading: false,

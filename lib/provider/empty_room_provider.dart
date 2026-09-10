@@ -15,7 +15,6 @@ class EmptyRoomQuery {
 
   final int week;
 
-  /// ScheduleState 中的 semester.id 是 String。
   final String semesterId;
 
   @override

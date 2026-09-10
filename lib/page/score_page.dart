@@ -79,14 +79,14 @@ class _ScorePageState extends ConsumerState<ScorePage> {
 
     if (!isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('成绩')),
+        appBar: AppBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ErrorPage(text: '当前未登入，请先登入账号', icon: Mdi.accountAlertOutline),
+                ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
               ],
             ),
           ),
@@ -99,7 +99,7 @@ class _ScorePageState extends ConsumerState<ScorePage> {
 
     if (semesterId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('成绩')),
+        appBar: AppBar(),
         body: const Center(child: Text('暂无学期信息')),
       );
     }
@@ -108,7 +108,6 @@ class _ScorePageState extends ConsumerState<ScorePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('成绩'),
         actions: [
           scoresAsync.maybeWhen(
             data: (scores) => scores.isEmpty

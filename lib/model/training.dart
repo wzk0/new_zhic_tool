@@ -24,20 +24,8 @@ class TrainingSubModule {
 
   final String sign;
 
-  /// 当前模块直接包含的课程
   final List<TrainingCourse> courses;
 
-  /// 子模块
-  ///
-  /// 例如：
-  ///
-  /// 一级模块
-  ///   ↓
-  /// 二级模块
-  ///   ↓
-  /// 三级模块
-  ///   ↓
-  /// 课程
   final List<TrainingSubModule> subModules;
 }
 

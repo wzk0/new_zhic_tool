@@ -235,7 +235,7 @@ class _LoginDialogState extends State<_LoginDialog> {
                     onTap: (index) {
                       HapticFeedback.lightImpact();
                       debugShow(
-                        '点击保存账号，'
+                        '点击保存账号, '
                         '直接登入：$username',
                       );
 
@@ -373,7 +373,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('登入'),
         bottom: _progress < 1.0
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(3),
@@ -438,7 +437,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _fillLoginForm(InAppWebViewController controller) async {
     if (!mounted) return;
     if (widget.username.isEmpty || widget.password.isEmpty) {
-      debugShow('没有登入账号信息，跳过自动填写');
+      debugShow('没有登入账号信息, 跳过自动填写');
       return;
     }
     if (_autoLoginTriggered) {
@@ -448,7 +447,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     debugShow('开始快速自动填写 CAS 登入');
 
-    // 仅调用一次 evaluateJavascript，轮询/填写/点击全在 JS 内部完成
     final result = await controller.evaluateJavascript(
       source:
           '''
@@ -552,11 +550,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       const { username, password } = findInputs();
 
       if (username && password) {
-        // 表单已就绪，立刻填写
+        
         setNativeValue(username, encodedUsername);
         setNativeValue(password, encodedPassword);
 
-        // 等一帧让 DOM 更新后再点击
+        
         requestAnimationFrame(() => {
           const btn = findAndClickButton();
           if (btn) {
@@ -588,9 +586,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     if (result is Map && result['clicked'] == true) {
       _autoLoginTriggered = true;
-      debugShow('登入控件点击成功，等待页面跳转');
+      debugShow('登入控件点击成功, 等待页面跳转');
     } else {
-      debugShow('未能自动点击登录按钮，请手动点击');
+      debugShow('未能自动点击登录按钮, 请手动点击');
     }
   }
 
@@ -601,11 +599,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
     if (_checkingLogin) {
-      debugShow('正在检查登入状态，跳过重复检测');
+      debugShow('正在检查登入状态, 跳过重复检测');
       return;
     }
     _checkingLogin = true;
-    debugShow('检测到登入成功页面，开始获取 Cookie');
+    debugShow('检测到登入成功页面, 开始获取 Cookie');
     try {
       final success = await ref.read(authProvider.notifier).login();
       if (!mounted) {
@@ -638,7 +636,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       } else {
         debugShow('登入失败：Cookie 获取失败');
         if (mounted) {
-          Fluttertoast.showToast(msg: '登入失败，无法获取登入信息');
+          Fluttertoast.showToast(msg: '登入失败, 无法获取登入信息');
         }
         _checkingLogin = false;
       }

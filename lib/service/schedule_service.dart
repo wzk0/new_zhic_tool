@@ -17,7 +17,6 @@ class ScheduleData {
 
   final Map<int, List<Course>> coursesByWeek;
 
-  /// 是否来自本地缓存。
   final bool fromCache;
 }
 
@@ -30,18 +29,10 @@ class ScheduleService {
   static const String _baseUrl =
       'https://eams.tjzhic.edu.cn/student/for-std/course-table/semester';
 
-  /// 以后可以把这里替换成用户设置。
   static const Duration scheduleTimeout = Duration(seconds: 8);
 
   static const String _cachePrefix = 'schedule_cache_';
 
-  /// 获取指定学期课表。
-  ///
-  /// 优先联网：
-  ///
-  /// 1. 网络请求成功 → 使用最新数据并保存缓存
-  /// 2. 网络请求失败 / 超时 → 使用本地缓存
-  /// 3. 没有缓存 → 抛出原始异常
   Future<ScheduleData> fetchSchedule({
     required String semesterId,
     Duration? timeout,
@@ -62,7 +53,6 @@ class ScheduleService {
 
       debugShow('学期 $semesterId 网络课表获取成功');
 
-      // 网络成功后立即保存原始 JSON。
       await _saveCache(semesterId, data);
 
       debugShow('学期 $semesterId 课表缓存保存成功');
@@ -73,7 +63,6 @@ class ScheduleService {
 
       debugShow(stackTrace.toString());
 
-      // 网络失败以后尝试读取缓存。
       final cachedData = await _loadCache(semesterId);
 
       if (cachedData != null) {
@@ -84,12 +73,10 @@ class ScheduleService {
 
       debugShow('学期 $semesterId 没有可用缓存');
 
-      // 没有缓存，继续抛出原始网络异常。
       rethrow;
     }
   }
 
-  /// 保存服务器返回的原始 JSON。
   Future<void> _saveCache(String semesterId, dynamic data) async {
     if (data is! Map<String, dynamic>) {
       debugShow('缓存跳过：服务器数据不是 JSON Object');
@@ -107,14 +94,12 @@ class ScheduleService {
 
       debugShow('课表缓存写入成功: $key');
     } catch (e, stackTrace) {
-      // 缓存失败不能影响正常显示课表。
       debugShow('课表缓存保存失败: $e');
 
       debugShow(stackTrace.toString());
     }
   }
 
-  /// 读取指定学期缓存。
   Future<dynamic> _loadCache(String semesterId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -227,7 +212,7 @@ class ScheduleService {
 
     for (final entry in coursesByWeek.entries) {
       debugShow(
-        '第 ${entry.key} 周，共 '
+        '第 ${entry.key} 周, 共 '
         '${entry.value.length} 节课程'
         '${fromCache ? '（缓存）' : ''}',
       );

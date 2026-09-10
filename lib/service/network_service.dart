@@ -6,14 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class NetworkService {
   NetworkService._();
-
   static final NetworkService instance = NetworkService._();
-
   static const String _cookieKey = 'cookies';
-
-  /// 全局请求延迟。
-  /// 后续可直接在设置页面修改此值：
-  /// `NetworkService.instance.requestDelay = Duration(milliseconds: 500);`
   Duration requestDelay = Duration.zero;
 
   Future<Map<String, String>> _buildHeaders({
@@ -90,7 +84,7 @@ class NetworkService {
     required Map<String, String> headers,
   }) {
     if (withCookies && !headers.containsKey('Cookie')) {
-      debugShow('警告：当前请求需要 Cookie，但没有 Cookie');
+      debugShow('警告：当前请求需要 Cookie, 但没有 Cookie');
     }
   }
 
@@ -99,18 +93,15 @@ class NetworkService {
       'HTTP ${response.statusCode}: '
       '${response.request?.url}',
     );
-
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
         'HTTP ${response.statusCode}: '
         '${response.reasonPhrase}',
       );
     }
-
     if (response.body.trim().isEmpty) {
       return null;
     }
-
     try {
       return jsonDecode(response.body);
     } on FormatException catch (e) {
@@ -118,78 +109,39 @@ class NetworkService {
     }
   }
 
-  /// 获取请求信息及重定向后的最终 URL
-  // 在 NetworkService 类中添加此方法
-  Future<String?> getRedirectUrl(
-    String url, {
-    Map<String, String>? queryParameters,
-    Duration timeout = const Duration(seconds: 8),
-    bool withCookies = false,
-  }) async {
-    await _applyDelay();
-
-    final uri = Uri.parse(url).replace(queryParameters: queryParameters);
-    debugShow('GET Redirect: $uri');
-
-    final headers = await _buildHeaders(withCookies: withCookies);
-
-    // 使用独立的 http.Client 以便手动控制重定向
+  Future<String?> getStudentBusinessId() async {
+    const url = 'https://eams.tjzhic.edu.cn/student/for-std/grade/sheet/';
+    final prefs = await SharedPreferences.getInstance();
+    final cookies = prefs.getString('cookies')?.replaceAll('"', '');
     final client = http.Client();
     try {
-      var currentUri = uri;
-      // 发起请求，禁用自动跟随重定向以便捕获 location
-      // 或者用循环追踪重定向
-      while (true) {
-        final request = http.Request('GET', currentUri)
-          ..headers.addAll(headers);
-        final streamedResponse = await client.send(request).timeout(timeout);
-
-        // 检查是否是重定向状态码 (301, 302, 303, 307, 308)
-        if ([301, 302, 303, 307, 308].contains(streamedResponse.statusCode)) {
-          final location = streamedResponse.headers['location'];
-          if (location != null) {
-            // 处理相对路径或绝对路径
-            currentUri = currentUri.resolve(location);
-            continue;
-          }
+      final request = http.Request('GET', Uri.parse(url))
+        ..followRedirects = false
+        ..headers['Cookie'] = cookies ?? ''
+        ..headers['User-Agent'] = 'Mozilla/5.0';
+      final streamedResponse = await client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
+      final location = response.headers['location'];
+      if (location != null) {
+        final id = _extractId(location);
+        if (id != null) {
+          return id;
         }
-        return currentUri.toString();
       }
+      final finalUrl = response.request?.url.toString() ?? '';
+      return _extractId(finalUrl);
+    } catch (_) {
+      return null;
     } finally {
       client.close();
     }
   }
 
-  // 在 NetworkService 类中添加此方法
-  Future<String?> fetchRedirectUrl(
-    String url, {
-    Map<String, String>? queryParameters,
-    Duration timeout = const Duration(seconds: 8),
-    bool withCookies = false,
-  }) async {
-    await _applyDelay();
+  String? _extractId(String url) {
+    final regExp = RegExp(r'/(\d+)(?:\?|$)');
 
-    final uri = Uri.parse(url).replace(queryParameters: queryParameters);
-    debugShow('GET Redirect URL: $uri');
+    final match = regExp.firstMatch(url);
 
-    final headers = await _buildHeaders(withCookies: withCookies);
-
-    // 使用独立的 Client 以防污染全局
-    final client = http.Client();
-    try {
-      // 发起 GET 请求（http 默认会自动跟随 302 重定向，最多 5 次）
-      final request = http.Request('GET', uri)..headers.addAll(headers);
-      final streamedResponse = await client.send(request).timeout(timeout);
-
-      // streamedResponse.request?.url 就是经历所有 302 重定向后的最终 URL！
-      final finalUrl = streamedResponse.request?.url.toString();
-
-      // 消费掉流，释放连接
-      await streamedResponse.stream.drain();
-
-      return finalUrl;
-    } finally {
-      client.close();
-    }
+    return match?.group(1);
   }
 }

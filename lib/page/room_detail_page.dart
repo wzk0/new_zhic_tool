@@ -21,11 +21,9 @@ class RoomDetailPage extends StatefulWidget {
 }
 
 class _RoomDetailPageState extends State<RoomDetailPage> {
-  /// 用于截取分享图片。
   final _shareKey = GlobalKey();
 
   Future<void> _shareAsImage() async {
-    // 等待当前帧完成，确保 RepaintBoundary 已经完成绘制。
     await WidgetsBinding.instance.endOfFrame;
 
     if (!mounted) return;
@@ -82,7 +80,6 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          // 教室信息
           M3EButton(
             onPressed: () {
               showM3EModalBottomSheet(
@@ -139,7 +136,6 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
             child: const Icon(Mdi.informationOutline),
           ),
 
-          // 分享
           M3EButton(
             onPressed: _shareAsImage,
             style: .text,

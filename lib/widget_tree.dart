@@ -166,7 +166,7 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
       final renderObject = classWidgetKey.currentContext?.findRenderObject();
 
       if (renderObject is! RenderRepaintBoundary) {
-        _showMessage('课表还没有准备好，请稍后再试');
+        _showMessage('课表还没有准备好, 请稍后再试');
         return;
       }
 

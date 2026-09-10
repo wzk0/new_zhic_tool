@@ -1,55 +1,16 @@
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:new_zhic_tool/model/exam.dart';
+import 'package:new_zhic_tool/service/network_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ExamService {
   ExamService._();
   static final ExamService instance = ExamService._();
   static const String _cookieKey = 'cookies';
-  Future<String> _getStudentBusinessId() async {
-    const url = 'https://eams.tjzhic.edu.cn/student/for-std/grade/sheet/';
-    final prefs = await SharedPreferences.getInstance();
-    final cookies = prefs.getString(_cookieKey)?.replaceAll('"', '');
-    final client = http.Client();
-    try {
-      final request = http.Request('GET', Uri.parse(url))
-        ..followRedirects = false
-        ..headers['Cookie'] = cookies ?? '';
-
-      final streamedResponse = await client.send(request);
-
-      final response = await http.Response.fromStream(streamedResponse);
-
-      final location = response.headers['location'];
-
-      if (location != null) {
-        final id = _extractId(location);
-        if (id != null) {
-          return id;
-        }
-      }
-      final finalUrl = response.request?.url.toString() ?? '';
-      final id = _extractId(finalUrl);
-      if (id != null) {
-        return id;
-      }
-      throw Exception('无法获取业务ID');
-    } finally {
-      client.close();
-    }
-  }
-
-  String? _extractId(String url) {
-    final regExp = RegExp(r'/(\d+)$|/(\d+)\?');
-
-    final match = regExp.firstMatch(url);
-
-    return match?.group(1) ?? match?.group(2);
-  }
 
   Future<List<Exam>> getExams(String semesterId) async {
-    final businessId = await _getStudentBusinessId();
+    final businessId = await NetworkService.instance.getStudentBusinessId();
 
     final prefs = await SharedPreferences.getInstance();
 

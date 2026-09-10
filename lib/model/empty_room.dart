@@ -18,10 +18,6 @@ class EmptyRoom {
 
   final List<RoomOccupation> occupations;
 
-  /// 保留原始数据。
-  ///
-  /// 如果后续接口增加字段，而模型暂时没有对应属性，
-  /// 仍然可以通过 rawData 获取。
   final Map<String, dynamic> rawData;
 
   factory EmptyRoom.fromJson(Map<String, dynamic> json) {

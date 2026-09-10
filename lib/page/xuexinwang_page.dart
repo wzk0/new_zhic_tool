@@ -2,14 +2,14 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 
-class EvaluationPage extends StatefulWidget {
-  const EvaluationPage({super.key});
+class XuexinwangPage extends StatefulWidget {
+  const XuexinwangPage({super.key});
 
   @override
-  State<EvaluationPage> createState() => _EvaluationPageState();
+  State<XuexinwangPage> createState() => _XuexinwangPageState();
 }
 
-class _EvaluationPageState extends State<EvaluationPage> {
+class _XuexinwangPageState extends State<XuexinwangPage> {
   InAppWebViewController? _webViewController;
   double _progress = 0;
 
@@ -30,7 +30,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('评教'),
+          title: const Text('学信网'),
           bottom: _progress < 1.0
               ? PreferredSize(
                   preferredSize: const Size.fromHeight(3),
@@ -40,9 +40,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
         ),
         body: InAppWebView(
           initialUrlRequest: URLRequest(
-            url: WebUri(
-              "https://eams.tjzhic.edu.cn/student/for-std/extra-system/student-summation-forstudent/index",
-            ),
+            url: WebUri("https://my.chsi.com.cn/archive/index.action"),
           ),
           onWebViewCreated: (controller) {
             _webViewController = controller;

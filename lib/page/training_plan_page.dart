@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:m3e_core/m3e_core.dart';
@@ -45,8 +46,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
     _loadCookies();
   }
 
-  // Cookie
-
   Future<void> _loadCookies() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -66,8 +65,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
       _isLoading = false;
     });
   }
-
-  // HTML 解析
 
   Future<void> _extractAndParseHtml(InAppWebViewController controller) async {
     if (_isParsing) {
@@ -108,16 +105,10 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
     }
   }
 
-  // 搜索
-
   void _openSearch() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const TrainingSearchPage()));
   }
-
-  // 刷新
-
-  // 分享图片
 
   Future<void> _shareAsImage() async {
     await WidgetsBinding.instance.endOfFrame;
@@ -169,22 +160,18 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
     }
   }
 
-  // Build
-
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = ref.watch(authProvider);
 
-    // 未登录
-
     if (!isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('培养方案')),
+        appBar: AppBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: ErrorPage(
-              text: '当前未登入，请先登入账号',
+              text: '当前未登入, 请先登入账号',
               icon: Mdi.accountAlertOutline,
             ),
           ),
@@ -192,11 +179,9 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
       );
     }
 
-    // 加载
-
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('培养方案')),
+        appBar: AppBar(),
         body: const LoadPage(text: '正在加载培养方案...', ifok: true),
       );
     }
@@ -205,7 +190,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('培养方案'),
         actions: [
           if (trainings.isNotEmpty)
             M3EButton(
@@ -235,7 +219,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
                   ),
                 ),
 
-          // 隐藏 WebView
           Offstage(
             offstage: true,
             child: SizedBox(
@@ -267,8 +250,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
     );
   }
 
-  // 页面内容
-
   Widget _buildContent(BuildContext context, List<TrainingModule> trainings) {
     final summary = TrainingService.instance.calculateSummary(trainings);
 
@@ -282,8 +263,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
       ],
     );
   }
-
-  // 一级模块
 
   Widget _buildExpandableList(
     BuildContext context,
@@ -326,8 +305,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
     );
   }
 
-  // 一级模块完成情况
-
   String _buildModuleSubtitle(TrainingModuleSummary summary) {
     return '已完成${summary.completedCount}门'
         '${_formatCredits(summary.completedCredits)}分 '
@@ -335,10 +312,6 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
         '${_formatCredits(summary.incompleteCredits)}分';
   }
 }
-
-// ============================================================
-// 顶部汇总卡片
-// ============================================================
 
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.summary});
@@ -348,6 +321,17 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return M3ESegmentedItem(
+      onTap: (index) {
+        HapticFeedback.lightImpact();
+        Confetti.launch(
+          context,
+          options: const ConfettiOptions(
+            particleCount: 150,
+            spread: 70,
+            y: 0.7,
+          ),
+        );
+      },
       index: 0,
       position: .first,
       outerRadius: 18,
@@ -382,10 +366,6 @@ class _SummaryCard extends StatelessWidget {
     );
   }
 }
-
-// ============================================================
-// 汇总项目
-// ============================================================
 
 class _SummaryItem extends StatelessWidget {
   const _SummaryItem({
@@ -433,10 +413,6 @@ class _SummaryItem extends StatelessWidget {
   }
 }
 
-// ============================================================
-// 二级 / 三级模块列表
-// ============================================================
-
 class _TrainingSubModuleList extends StatelessWidget {
   const _TrainingSubModuleList({required this.subModules, required this.level});
 
@@ -464,10 +440,6 @@ class _TrainingSubModuleList extends StatelessWidget {
     );
   }
 }
-
-// ============================================================
-// 二级 / 三级模块
-// ============================================================
 
 class _TrainingSubModuleCard extends StatefulWidget {
   const _TrainingSubModuleCard({
@@ -527,7 +499,6 @@ class _TrainingSubModuleCardState extends State<_TrainingSubModuleCard> {
           });
         },
 
-        // Header
         headerBuilder: (context, index, progress) {
           return Row(
             children: [
@@ -567,7 +538,6 @@ class _TrainingSubModuleCardState extends State<_TrainingSubModuleCard> {
           );
         },
 
-        // Body
         bodyBuilder: (context, index, progress) {
           if (!hasCourses && !hasSubModules) {
             return Padding(
@@ -597,10 +567,6 @@ class _TrainingSubModuleCardState extends State<_TrainingSubModuleCard> {
     );
   }
 }
-
-// ============================================================
-// 课程
-// ============================================================
 
 class _TrainingCourseRow extends StatelessWidget {
   const _TrainingCourseRow({required this.course});
@@ -699,10 +665,6 @@ class _TrainingCourseRow extends StatelessWidget {
     );
   }
 }
-
-// ============================================================
-// 课程详情
-// ============================================================
 
 class TrainingCourseDetail extends StatelessWidget {
   const TrainingCourseDetail({super.key, required this.course});

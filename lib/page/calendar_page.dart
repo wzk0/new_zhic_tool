@@ -27,13 +27,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   String? _errorMessage;
   List<File> _cachedImages = [];
 
-  /// Gitee 仓库目录 API
-  ///
-  /// 仓库：
-  /// https://gitee.com/wzk0/zhanghuan_data
-  ///
-  /// 目录：
-  /// xiao_li
   static const String _giteeApiUrl =
       'https://gitee.com/api/v5/repos/thdbd/zhanghuan_data/contents/xiao_li';
 
@@ -160,17 +153,13 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         return;
       }
 
-      throw Exception('Gitee API 返回成功，但目录中没有可用的校历图片');
+      throw Exception('Gitee API 返回成功, 但目录中没有可用的校历图片');
     } catch (e, stackTrace) {
       debugShow('Gitee 远程校历获取失败: $e');
       debugShow(stackTrace.toString());
 
-      Fluttertoast.showToast(msg: '校历获取失败，正在使用本地缓存');
+      Fluttertoast.showToast(msg: '校历获取失败, 正在使用本地缓存');
     }
-
-    // ----------------------------------------------------------
-    // Gitee 获取失败 → 尝试读取本地缓存
-    // ----------------------------------------------------------
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -199,7 +188,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           }
 
           debugShow(
-            '从本地缓存恢复校历图片，'
+            '从本地缓存恢复校历图片, '
             '共 ${localFiles.length} 张',
           );
 
@@ -211,14 +200,10 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       debugShow(stackTrace.toString());
     }
 
-    // ----------------------------------------------------------
-    // 远程获取失败 + 本地也没有缓存
-    // ----------------------------------------------------------
-
     if (mounted) {
       setState(() {
         _isLoading = false;
-        _errorMessage = '暂无校历图片，请检查网络连接';
+        _errorMessage = '暂无校历图片, 请检查网络连接';
       });
     }
   }
@@ -282,10 +267,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('校历')),
-      body: _buildBody(context),
-    );
+    return Scaffold(appBar: AppBar(), body: _buildBody(context));
   }
 
   Widget _buildBody(BuildContext context) {

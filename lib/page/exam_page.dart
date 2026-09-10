@@ -79,14 +79,14 @@ class _ExamPageState extends ConsumerState<ExamPage> {
 
     if (!isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('考试')),
+        appBar: AppBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ErrorPage(text: '当前未登入，请先登入账号', icon: Mdi.accountAlertOutline),
+                ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
               ],
             ),
           ),
@@ -100,7 +100,7 @@ class _ExamPageState extends ConsumerState<ExamPage> {
 
     if (semesterId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('考试')),
+        appBar: AppBar(),
         body: const Center(child: Text('暂无学期信息')),
       );
     }
@@ -109,7 +109,6 @@ class _ExamPageState extends ConsumerState<ExamPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('考试'),
         actions: [
           examsAsync.maybeWhen(
             data: (exams) => exams.isEmpty
@@ -219,12 +218,9 @@ class _ExamContent extends ConsumerWidget {
 
         Confetti.launch(
           context,
-
           options: const ConfettiOptions(
             particleCount: 150,
-
             spread: 70,
-
             y: 0.7,
           ),
         );
@@ -298,7 +294,6 @@ class _ExamContent extends ConsumerWidget {
     );
   }
 
-  /// 单个考试 Item
   Widget _getExamItem(BuildContext context, Exam exam) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;

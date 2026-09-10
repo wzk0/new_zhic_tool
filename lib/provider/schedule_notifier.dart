@@ -40,7 +40,6 @@ class ScheduleState {
 
   final Object? error;
 
-  /// 当前显示的课表是否来自缓存。
   final bool fromCache;
 
   ScheduleState copyWith({
@@ -92,11 +91,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
     return const ScheduleState();
   }
 
-  /// 初始化：
-  /// 1. 获取学期配置（不依赖登入状态，未登入也能展示学期）
-  /// 2. 恢复上次选择的学期
-  /// 3. 计算当前周
-  /// 4. 只有在已登入的情况下，才去拉取课表与个人信息
   Future<void> initialize() async {
     if (state.isLoading || state.isSyncing) {
       return;
@@ -105,7 +99,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      // 学期配置通常是公共数据，不登入也可以正常获取
       final semesters = await _configService.fetchConfigs();
 
       if (semesters.isEmpty) {
@@ -131,7 +124,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
 
       final currentWeek = _getCurrentWeek(selectedSemester.startDate);
 
-      // 先把学期列表填充好，这样未登入时也能正常选择学期和看校历等
       state = state.copyWith(
         semesters: semesters,
         currentSemester: selectedSemester,
@@ -144,11 +136,10 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
         clearError: true,
       );
 
-      // 只有已登入才去加载私有课表和个人信息
       if (isLoggedIn) {
         await loadCourses();
       } else {
-        debugShow('用户未登入，跳过加载个人课表与学生信息');
+        debugShow('用户未登入, 跳过加载个人课表与学生信息');
       }
     } catch (e, stackTrace) {
       debugShow('初始化课表失败: $e');
@@ -158,13 +149,11 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
     }
   }
 
-  /// 加载当前学期整个课表。
   Future<void> loadCourses() async {
-    // 每次加载前严格校验登入状态，未登入直接拦截并清空任何残留信息
     final prefs = await SharedPreferences.getInstance();
     final bool isLoggedIn = prefs.getBool(_loginFlagKey) ?? false;
     if (!isLoggedIn) {
-      debugShow('【安全拦截】检测到当前未登入，拒绝加载课表与个人信息');
+      debugShow('【安全拦截】检测到当前未登入, 拒绝加载课表与个人信息');
       state = state.copyWith(
         studentInfo: const StudentInfo(),
         courses: const [],
@@ -208,7 +197,7 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
 
       if (state.currentSemester?.id != semesterId) {
         debugShow(
-          '当前学期已经改变，'
+          '当前学期已经改变, '
           '忽略旧课表: '
           'semester=$semesterId',
         );
@@ -272,7 +261,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
     }
   }
 
-  /// 选择学期。
   Future<void> selectSemester(SemesterConfig semester) async {
     debugShow(
       '选择学期: '
@@ -315,7 +303,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
       debugShow(stackTrace.toString());
     }
 
-    // 切换学期时，如果用户已登入则顺便加载新学期的课表
     final prefs = await SharedPreferences.getInstance();
     final bool isLoggedIn = prefs.getBool(_loginFlagKey) ?? false;
     if (isLoggedIn) {
@@ -323,7 +310,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
     }
   }
 
-  /// 切换周次。
   Future<void> selectWeek(int week) async {
     if (week < 1 || week > 20) {
       return;
@@ -349,7 +335,7 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
   }
 
   Future<void> logout() async {
-    debugShow('用户执行登出，正在清空所有本地缓存与状态...');
+    debugShow('用户执行登出, 正在清空所有本地缓存与状态...');
     _loadGeneration++;
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -370,7 +356,7 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
       coursesByWeek: const {},
     );
 
-    debugShow('已切换为登出状态，个人信息与课表已全部清空');
+    debugShow('已切换为登出状态, 个人信息与课表已全部清空');
   }
 
   int _getCurrentWeek(String startDate) {

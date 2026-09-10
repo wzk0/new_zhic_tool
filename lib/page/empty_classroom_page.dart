@@ -88,14 +88,14 @@ class _EmptyClassroomPageState extends ConsumerState<EmptyClassroomPage> {
 
     if (!isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('空教室')),
+        appBar: AppBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ErrorPage(text: '当前未登入，请先登入账号', icon: Mdi.accountAlertOutline),
+                ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
               ],
             ),
           ),
@@ -109,7 +109,7 @@ class _EmptyClassroomPageState extends ConsumerState<EmptyClassroomPage> {
 
     if (semesterId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('空教室')),
+        appBar: AppBar(),
         body: EmptyPage(text: '暂无学期信息', icon: Mdi.calendarRangeOutline),
       );
     }
@@ -118,7 +118,7 @@ class _EmptyClassroomPageState extends ConsumerState<EmptyClassroomPage> {
     final roomsAsync = ref.watch(emptyRoomProvider(query));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('空教室')),
+      appBar: AppBar(),
       body: roomsAsync.when(
         loading: () =>
             const LoadPage(text: '尝试获取数据中,\n如果加载时间长, 请尝试重新登录', ifok: true),
@@ -399,7 +399,7 @@ class RoomOccupationCard extends StatelessWidget {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        LegendItem(colorSchemeKey: true, label: '空闲'), // 内部处理类型分发
+        LegendItem(colorSchemeKey: true, label: '空闲'),
         SizedBox(width: 24),
         LegendItem(colorSchemeKey: false, label: '占用'),
       ],

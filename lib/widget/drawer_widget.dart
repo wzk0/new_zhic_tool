@@ -16,19 +16,19 @@ import 'package:new_zhic_tool/page/exam_page.dart';
 import 'package:new_zhic_tool/page/help_page.dart';
 import 'package:new_zhic_tool/page/leave_page.dart';
 import 'package:new_zhic_tool/page/library_page.dart';
+import 'package:new_zhic_tool/page/neea_page.dart';
 import 'package:new_zhic_tool/page/question_bank_page.dart';
 import 'package:new_zhic_tool/page/score_page.dart';
-import 'package:new_zhic_tool/page/setting_page.dart';
 import 'package:new_zhic_tool/page/training_plan_page.dart';
+import 'package:new_zhic_tool/page/xuexinwang_page.dart';
 import 'package:new_zhic_tool/provider/schedule_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 抽屉菜单项配置模型，便于后续扩展与维护
 class DrawerItemConfig {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Widget? targetPage; // 为 null 时表示返回首页 (popUntil first)
+  final Widget? targetPage;
 
   const DrawerItemConfig({
     required this.icon,
@@ -131,23 +131,17 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
       DrawerItemConfig(
         icon: Mdi.schoolOutline,
         title: '学信网',
-        subtitle: '在线查询学信网',
-        targetPage: LeavePage(),
+        subtitle: '在线查看学信网',
+        targetPage: XuexinwangPage(),
       ),
       DrawerItemConfig(
         icon: Mdi.textSearch,
-        title: '其他考试查询',
-        subtitle: '在线查询四六级等考试成绩',
-        targetPage: LeavePage(),
+        title: '教育考试查询',
+        subtitle: '在线查看四六级等考试成绩',
+        targetPage: NeeaPage(),
       ),
     ],
     [
-      DrawerItemConfig(
-        icon: Mdi.cogOutline,
-        title: '设置',
-        subtitle: '应用设置',
-        targetPage: SettingPage(),
-      ),
       DrawerItemConfig(
         icon: Mdi.helpCircleOutline,
         title: '帮助',
@@ -314,6 +308,7 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
                   _buildPart(context, _menuGroups[1]),
                   const SizedBox(height: 15),
                   _buildPart(context, _menuGroups[2]),
+                  const SizedBox(height: 15),
                 ],
               ),
             ),
@@ -448,7 +443,6 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
                     toastLength: Toast.LENGTH_SHORT,
                     gravity: ToastGravity.BOTTOM,
                   );
-
             _saveState();
           },
           onLongPress: () async {

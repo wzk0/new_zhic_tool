@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ConfigService {
   static const String _remoteUrl =
       'https://gitee.com/thdbd/zhanghuan_data/raw/main/semester.json';
-  //https://raw.githubusercontent.com/wzk0/zhanghuan_data/main/semester.json
+
   static const String _cacheKey = 'semester_configs_cache';
   static const String _selectedSemesterKey = 'selected_semester_id';
   Future<List<SemesterConfig>> fetchConfigs() async {
@@ -36,14 +36,14 @@ class ConfigService {
           throw const FormatException('没有有效的学期配置');
         }
         await prefs.setString(_cacheKey, response.body);
-        debugShow('获取学期配置成功，共 ${configs.length} 个学期');
+        debugShow('获取学期配置成功, 共 ${configs.length} 个学期');
         return configs;
       }
       throw Exception('HTTP ${response.statusCode}');
     } catch (e, stackTrace) {
       debugShow('远程学期配置获取失败: $e');
       debugShow(stackTrace.toString());
-      Fluttertoast.showToast(msg: '学期配置获取失败，正在使用本地缓存');
+      Fluttertoast.showToast(msg: '学期配置获取失败, 正在使用本地缓存');
     }
     final cachedData = prefs.getString(_cacheKey);
     if (cachedData != null && cachedData.isNotEmpty) {
@@ -60,7 +60,7 @@ class ConfigService {
               .toList();
           if (configs.isNotEmpty) {
             debugShow(
-              '从本地缓存恢复学期配置，'
+              '从本地缓存恢复学期配置, '
               '共 ${configs.length} 个学期',
             );
             return configs;

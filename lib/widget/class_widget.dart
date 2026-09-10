@@ -56,7 +56,7 @@ class ClassWidget extends StatelessWidget {
     final context = captureKey?.currentContext;
 
     if (context == null) {
-      throw StateError('ClassWidget 尚未完成渲染，无法截图。');
+      throw StateError('ClassWidget 尚未完成渲染, 无法截图。');
     }
 
     final renderObject = context.findRenderObject();
@@ -109,7 +109,6 @@ class ClassWidget extends StatelessWidget {
     return content;
   }
 
-  /// 精准推算第 currentWeek 周的周一日期
   DateTime _getMondayForWeek(DateTime now) {
     if (semesterStartDate != null && semesterStartDate!.isNotEmpty) {
       try {

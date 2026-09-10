@@ -37,10 +37,6 @@ class _TrainingSearchPageState extends ConsumerState<TrainingSearchPage> {
     super.dispose();
   }
 
-  // ============================================================
-  // 构建课程搜索项目
-  // ============================================================
-
   void _updateDropdownItems(List<TrainingModule> trainings) {
     final results = <_TrainingSearchResult>[];
 
@@ -117,10 +113,6 @@ class _TrainingSearchPageState extends ConsumerState<TrainingSearchPage> {
         '${result.course.semester}';
   }
 
-  // ============================================================
-  // 多选处理
-  // ============================================================
-
   void _handleSelectionChanged(List<M3EDropdownItem<String>> selectedItems) {
     final selectedValues = selectedItems.map((item) => item.value).toSet();
 
@@ -156,10 +148,6 @@ class _TrainingSearchPageState extends ConsumerState<TrainingSearchPage> {
       });
     });
   }
-
-  // ============================================================
-  // 获取选中的课程
-  // ============================================================
 
   List<_TrainingSearchResult> _findSelectedCourses(Set<String> selectedValues) {
     if (selectedValues.isEmpty) {
@@ -212,22 +200,18 @@ class _TrainingSearchPageState extends ConsumerState<TrainingSearchPage> {
     }
   }
 
-  // ============================================================
-  // Build
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = ref.watch(authProvider);
 
     if (!isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('搜索培养方案')),
+        appBar: AppBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: ErrorPage(
-              text: '当前未登入，请先登入账号',
+              text: '当前未登入, 请先登入账号',
               icon: Mdi.accountAlertOutline,
             ),
           ),
@@ -239,22 +223,15 @@ class _TrainingSearchPageState extends ConsumerState<TrainingSearchPage> {
 
     if (trainings.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('搜索培养方案')),
+        appBar: AppBar(),
         body: const LoadPage(text: '正在加载培养方案...', ifok: true),
       );
     }
 
     _updateDropdownItems(trainings);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('搜索培养方案')),
-      body: _buildContent(context),
-    );
+    return Scaffold(appBar: AppBar(), body: _buildContent(context));
   }
-
-  // ============================================================
-  // 页面内容
-  // ============================================================
 
   Widget _buildContent(BuildContext context) {
     return Column(

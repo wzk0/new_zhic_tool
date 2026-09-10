@@ -4,8 +4,6 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:new_zhic_tool/model/training.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 培养方案总汇总
-
 class TrainingSummary {
   const TrainingSummary({
     required this.completedCount,
@@ -16,26 +14,18 @@ class TrainingSummary {
     required this.totalCredits,
   });
 
-  /// 已完成课程数量
   final int completedCount;
 
-  /// 已完成课程学分
   final double completedCredits;
 
-  /// 未完成课程数量
   final int incompleteCount;
 
-  /// 未完成课程学分
   final double incompleteCredits;
 
-  /// 总课程数量
   final int totalCount;
 
-  /// 总学分
   final double totalCredits;
 }
-
-/// 一级模块汇总
 
 class TrainingModuleSummary {
   const TrainingModuleSummary({
@@ -47,26 +37,18 @@ class TrainingModuleSummary {
     required this.totalCredits,
   });
 
-  /// 已完成课程数量
   final int completedCount;
 
-  /// 已完成课程学分
   final double completedCredits;
 
-  /// 未完成课程数量
   final int incompleteCount;
 
-  /// 未完成课程学分
   final double incompleteCredits;
 
-  /// 本模块课程总数量
   final int totalCount;
 
-  /// 本模块课程总学分
   final double totalCredits;
 }
-
-/// 培养方案 Service
 
 class TrainingService {
   TrainingService._();
@@ -75,16 +57,12 @@ class TrainingService {
 
   static const String _cookieKey = 'cookies';
 
-  // Cookie
-
-  /// 获取当前登录 Cookie
   Future<String?> _getCookies() async {
     final prefs = await SharedPreferences.getInstance();
 
     return prefs.getString(_cookieKey);
   }
 
-  /// 构造 WebView 请求 Header
   Future<Map<String, String>> getHeaders() async {
     final cookie = await _getCookies();
 
@@ -95,21 +73,6 @@ class TrainingService {
     };
   }
 
-  // HTML 解析
-
-  /// 解析培养方案 HTML
-  ///
-  /// HTML
-  ///
-  /// depth-1
-  ///   ↓
-  /// depth-2
-  ///   ↓
-  /// depth-3
-  ///   ↓
-  /// courses
-  ///
-  /// 使用递归解析，因此支持更多层级。
   List<TrainingModule> parseHtml(String html) {
     final document = html_parser.parse(html);
 
@@ -126,9 +89,6 @@ class TrainingService {
     return result;
   }
 
-  // 培养方案总汇总
-
-  /// 计算整个培养方案的汇总数据
   TrainingSummary calculateSummary(List<TrainingModule> trainings) {
     var completedCount = 0;
     var incompleteCount = 0;
@@ -155,8 +115,6 @@ class TrainingService {
       totalCredits: completedCredits + incompleteCredits,
     );
   }
-
-  // 一级模块汇总
 
   TrainingModuleSummary calculateModuleSummary(TrainingModule module) {
     var completedCount = 0;
@@ -185,16 +143,12 @@ class TrainingService {
     );
   }
 
-  // 子模块递归汇总
-
   TrainingModuleSummary _calculateSubModuleSummary(TrainingSubModule module) {
     var completedCount = 0;
     var incompleteCount = 0;
 
     var completedCredits = 0.0;
     var incompleteCredits = 0.0;
-
-    // 当前模块课程
 
     for (final course in module.courses) {
       final credits = _parseCredits(course.credits);
@@ -207,8 +161,6 @@ class TrainingService {
         incompleteCredits += credits;
       }
     }
-
-    // 子模块
 
     for (final subModule in module.subModules) {
       final summary = _calculateSubModuleSummary(subModule);
@@ -230,8 +182,6 @@ class TrainingService {
     );
   }
 
-  // 完成状态
-
   bool _isCompleted(String status) {
     final normalized = status
         .replaceAll('\u00a0', ' ')
@@ -240,8 +190,6 @@ class TrainingService {
 
     return normalized == '通过';
   }
-
-  // 学分解析
 
   double _parseCredits(String credits) {
     final normalized = credits
@@ -258,8 +206,6 @@ class TrainingService {
     return double.tryParse(match.group(0)!) ?? 0;
   }
 
-  // 一级模块
-
   TrainingModule _parseModule(Element module) {
     final nameElement = module.querySelector('.module-name');
 
@@ -272,34 +218,13 @@ class TrainingService {
     final subModules = _parseDirectSubModules(module);
 
     debugPrint(
-      '一级模块：$name，'
+      '一级模块：$name, '
       '二级模块：${subModules.length}',
     );
 
     return TrainingModule(name: name, sign: sign, subModules: subModules);
   }
 
-  // 递归解析子模块
-
-  /// 解析当前模块的直接子模块。
-  ///
-  /// 注意：
-  ///
-  /// 不能直接使用：
-  ///
-  /// getElementsByClassName('module-tpl depth-3')
-  ///
-  /// 因为它会查找所有后代节点。
-  ///
-  /// 这里通过：
-  ///
-  /// .m-content
-  ///   ↓
-  /// .c-children
-  ///   ↓
-  /// children
-  ///
-  /// 只获取当前层级的直接子模块。
   List<TrainingSubModule> _parseDirectSubModules(Element module) {
     final result = <TrainingSubModule>[];
 
@@ -325,8 +250,6 @@ class TrainingService {
 
     return result;
   }
-
-  // 递归子模块
 
   TrainingSubModule _parseSubModule(Element module) {
     final nameElement = module.querySelector('.m-title .module-name');
@@ -373,8 +296,6 @@ class TrainingService {
     );
   }
 
-  // 获取当前模块直接 m-content
-
   Element? _getDirectContent(Element module) {
     for (final child in module.children) {
       if (child.classes.contains('m-content')) {
@@ -384,8 +305,6 @@ class TrainingService {
 
     return null;
   }
-
-  // 获取当前层级直接 c-children
 
   Element? _getDirectChildrenContainer(Element content) {
     for (final child in content.children) {
@@ -397,8 +316,6 @@ class TrainingService {
     return null;
   }
 
-  // 获取当前层级直接课程表
-
   Element? _getDirectCourseTable(Element content) {
     for (final child in content.children) {
       if (child.localName == 'table' && child.classes.contains('c-table')) {
@@ -409,13 +326,9 @@ class TrainingService {
     return null;
   }
 
-  // 判断模块元素
-
   bool _isModuleElement(Element element) {
     return element.classes.contains('module-tpl');
   }
-
-  // 课程
 
   TrainingCourse? _parseCourse(Element row) {
     final columns = row.getElementsByTagName('td');
@@ -469,8 +382,6 @@ class TrainingService {
     return course;
   }
 
-  // 清理课程名称
-
   String _getCourseName(Element column) {
     final dataText = column.attributes['data-text'];
 
@@ -479,12 +390,6 @@ class TrainingService {
     }
 
     var name = column.text.replaceAll('\u00a0', ' ').trim();
-
-    // 去掉：
-    //
-    // 1. 课程名称
-    // 2. 1. 课程名称
-    // 3. 2.课程名称
 
     name = name.replaceFirst(RegExp(r'^\d+\.\s*'), '');
 
