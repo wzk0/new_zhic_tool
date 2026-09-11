@@ -22,6 +22,7 @@ import 'package:new_zhic_tool/page/score_page.dart';
 import 'package:new_zhic_tool/page/training_plan_page.dart';
 import 'package:new_zhic_tool/page/xuexinwang_page.dart';
 import 'package:new_zhic_tool/provider/schedule_notifier.dart';
+import 'package:new_zhic_tool/widget/chip_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DrawerItemConfig {
@@ -484,24 +485,7 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
               children: [
                 Text(name, style: Theme.of(context).textTheme.titleMedium),
                 if (hasValidStudent && student.department.isNotEmpty)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 5,
-                        right: 5,
-                        top: 1,
-                        bottom: 1,
-                      ),
-                      child: Text(
-                        student.department,
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ),
-                  ),
+                  ChipWidget(text: student.department),
               ],
             ),
             if (hasValidStudent) ...[
@@ -510,43 +494,8 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
                 spacing: 3,
                 children: [
                   if (student.adminClass.isNotEmpty)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          left: 5,
-                          right: 5,
-                          top: 1,
-                          bottom: 1,
-                        ),
-                        child: Text(
-                          student.adminClass,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ),
-                    ),
-                  if (student.code.isNotEmpty)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          left: 5,
-                          right: 5,
-                          top: 1,
-                          bottom: 1,
-                        ),
-                        child: Text(
-                          student.code,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ),
-                    ),
+                    ChipWidget(text: student.adminClass),
+                  if (student.code.isNotEmpty) ChipWidget(text: student.code),
                 ],
               ),
             ],

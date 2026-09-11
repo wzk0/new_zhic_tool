@@ -316,10 +316,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
     return M3EExpandableCardList(
       data: data,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       allowMultipleExpanded: true,
       initiallyExpanded: _cachedImages.isNotEmpty ? {0} : const {},
-      padding: const EdgeInsets.all(16),
       style: M3EExpandableStyle(
+        haptic: M3EHapticFeedback.light,
         headerPadding: .only(left: 18, right: 12, top: 12, bottom: 12),
         expandIcon: const Icon(Mdi.chevronDown),
         expandTooltip: '展开校历',

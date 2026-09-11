@@ -14,6 +14,7 @@ import 'package:new_zhic_tool/provider/auth_notifier.dart';
 import 'package:new_zhic_tool/provider/training_provider.dart';
 import 'package:new_zhic_tool/service/training_service.dart';
 import 'package:new_zhic_tool/widget/bottomsheet_widget.dart';
+import 'package:new_zhic_tool/widget/chip_widget.dart';
 import 'package:new_zhic_tool/widget/error_page.dart';
 import 'package:new_zhic_tool/widget/load_page.dart';
 import 'package:share_plus/share_plus.dart';
@@ -167,15 +168,7 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
     if (!isLoggedIn) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: ErrorPage(
-              text: '当前未登入, 请先登入账号',
-              icon: Mdi.accountAlertOutline,
-            ),
-          ),
-        ),
+        body: ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
       );
     }
 
@@ -197,10 +190,11 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
               style: M3EButtonStyle.text,
               child: const Icon(Mdi.shareVariant),
             ),
-          IconButton(
+          M3EButton(
             tooltip: '搜索',
             onPressed: trainings.isEmpty ? null : _openSearch,
-            icon: const Icon(Mdi.magnify),
+            style: M3EButtonStyle.text,
+            child: const Icon(Mdi.magnify),
           ),
         ],
       ),
@@ -301,6 +295,7 @@ class _TrainingPlanPageState extends ConsumerState<TrainingPlanPage> {
         collapseIcon: const Icon(Mdi.chevronUp),
         expandTooltip: '展开模块',
         collapseTooltip: '收起模块',
+        haptic: M3EHapticFeedback.light,
       ),
     );
   }
@@ -468,13 +463,9 @@ class _TrainingSubModuleCardState extends State<_TrainingSubModuleCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     final textTheme = Theme.of(context).textTheme;
-
     final hasCourses = widget.subModule.courses.isNotEmpty;
-
     final hasSubModules = widget.subModule.subModules.isNotEmpty;
-
     return Padding(
       padding: EdgeInsets.only(left: widget.level == 3 ? 8 : 0),
       child: M3EExpandableItem(
@@ -490,10 +481,14 @@ class _TrainingSubModuleCardState extends State<_TrainingSubModuleCard> {
             top: 12,
             bottom: 12,
           ),
+          expandTooltip: '展开',
+          collapseTooltip: '收起',
         ),
+
         expandMotion: .expressiveSpatialDefault,
         collapseMotion: .expressiveSpatialDefault,
         onToggle: () {
+          HapticFeedback.lightImpact();
           setState(() {
             _isExpanded = !_isExpanded;
           });
@@ -549,6 +544,7 @@ class _TrainingSubModuleCardState extends State<_TrainingSubModuleCard> {
           return Padding(
             padding: EdgeInsets.only(left: widget.level == 2 ? 8 : 0),
             child: Column(
+              spacing: 6,
               children: [
                 if (hasCourses)
                   ...widget.subModule.courses.map(
@@ -605,25 +601,30 @@ class _TrainingCourseRow extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 1,
                     children: [
                       Text(
                         course.name,
-                        style: textTheme.titleSmall,
+                        style: textTheme.bodySmall,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '成绩: ${course.score}│'
-                        '绩点: ${course.gpa}│'
-                        '${course.status}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: isCompleted
-                              ? colorScheme.primary
-                              : colorScheme.outline,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        spacing: 5,
+                        children: [
+                          ChipWidget(
+                            text: '成绩: ${course.score}',
+                            isPrimary: isCompleted,
+                          ),
+                          ChipWidget(
+                            text: '绩点: ${course.gpa}',
+                            isPrimary: isCompleted,
+                          ),
+                          ChipWidget(
+                            text: course.status,
+                            isPrimary: isCompleted,
+                          ),
+                        ],
                       ),
                     ],
                   ),

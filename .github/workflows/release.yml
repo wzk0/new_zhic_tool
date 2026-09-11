@@ -70,10 +70,10 @@ jobs:
             ## 掌环 ${{ github.ref_name }} 版本发布 🚀
             
             ### 📦 下载说明
-            - 针对不同 Android 架构提供了独立拆包，请按需下载：
+            - 针对不同 Android 架构提供了独立拆包, 请按需下载：
               - **arm64-v8a**：绝大多数现代主流 Android 手机（推荐优先选择）
               - **armeabi-v7a**：部分较旧的 32 位设备
               - **x86_64**：模拟器或部分特殊平板设备
             
-            *此发布由 GitHub Actions 自动化流水线构建生成。*
+            *此发布由 GitHub Actions 自动构建生成. *
           token: ${{ secrets.GITHUB_TOKEN }}

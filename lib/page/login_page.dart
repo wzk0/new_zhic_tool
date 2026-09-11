@@ -27,6 +27,10 @@ class LoginPage extends ConsumerStatefulWidget {
 
   static const String _savedAccountsKey = 'login_saved_accounts';
 
+  static Future<List<Map<String, dynamic>>> loadSavedAccounts() {
+    return _loadSavedAccounts();
+  }
+
   static Future<bool> open(BuildContext context) async {
     debugShow('开始登入流程');
 
@@ -343,15 +347,16 @@ class _LoginDialogState extends State<_LoginDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        M3EButton(
           onPressed: () {
             HapticFeedback.heavyImpact();
             debugShow('取消登入');
             Navigator.of(context).pop();
           },
+          style: .text,
           child: const Text('取消'),
         ),
-        FilledButton(
+        M3EButton(
           onPressed: () async {
             HapticFeedback.heavyImpact();
             await _submit();
@@ -588,7 +593,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _autoLoginTriggered = true;
       debugShow('登入控件点击成功, 等待页面跳转');
     } else {
-      debugShow('未能自动点击登录按钮, 请手动点击');
+      debugShow('未能自动点击登入按钮, 请手动点击');
     }
   }
 

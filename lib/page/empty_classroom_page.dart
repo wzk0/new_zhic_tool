@@ -89,17 +89,7 @@ class _EmptyClassroomPageState extends ConsumerState<EmptyClassroomPage> {
     if (!isLoggedIn) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
-              ],
-            ),
-          ),
-        ),
+        body: ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
       );
     }
 
@@ -121,7 +111,7 @@ class _EmptyClassroomPageState extends ConsumerState<EmptyClassroomPage> {
       appBar: AppBar(),
       body: roomsAsync.when(
         loading: () =>
-            const LoadPage(text: '尝试获取数据中,\n如果加载时间长, 请尝试重新登录', ifok: true),
+            const LoadPage(text: '尝试获取数据中,\n如果加载时间长, 请尝试重新登入', ifok: true),
         error: (error, stackTrace) =>
             ErrorPage(text: error.toString(), icon: Mdi.cloudOffOutline),
         data: (rooms) => _buildContent(context, query, rooms),

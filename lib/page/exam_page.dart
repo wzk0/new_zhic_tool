@@ -80,17 +80,7 @@ class _ExamPageState extends ConsumerState<ExamPage> {
     if (!isLoggedIn) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
-              ],
-            ),
-          ),
-        ),
+        body: ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
       );
     }
 

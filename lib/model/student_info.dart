@@ -21,11 +21,9 @@ class StudentInfo {
   }
 
   String get avatarText {
-    if (name.trim().isEmpty) {
-      return '?';
-    }
-
-    return name.trim().substring(0, 1);
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+    return trimmed.substring(trimmed.length - 1);
   }
 
   factory StudentInfo.fromJson(Map<String, dynamic> json) {

@@ -56,13 +56,13 @@ class ClassWidget extends StatelessWidget {
     final context = captureKey?.currentContext;
 
     if (context == null) {
-      throw StateError('ClassWidget 尚未完成渲染, 无法截图。');
+      throw StateError('ClassWidget 尚未完成渲染, 无法截图.');
     }
 
     final renderObject = context.findRenderObject();
 
     if (renderObject is! RenderRepaintBoundary) {
-      throw StateError('captureKey 没有绑定到 RenderRepaintBoundary。');
+      throw StateError('captureKey 没有绑定到 RenderRepaintBoundary.');
     }
 
     return renderObject.toImage(pixelRatio: pixelRatio);

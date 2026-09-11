@@ -24,13 +24,11 @@ class WidgetTree extends ConsumerStatefulWidget {
 
 class _WidgetTreeState extends ConsumerState<WidgetTree> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-
   final classWidgetKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-
     _initialize();
   }
 
@@ -49,12 +47,9 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = ref.watch(authProvider);
-
     return Scaffold(
       key: scaffoldKey,
-
       drawer: const DrawerWidget(),
-
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
@@ -67,23 +62,17 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
             child: Icon(Mdi.apps, size: 26),
           ),
         ),
-
         title: Text('掌环', style: Theme.of(context).textTheme.titleMedium),
-
         actions: [
           M3ESplitButton(
             label: isLoggedIn ? '登出' : '登入',
-
             leadingIcon: isLoggedIn ? Mdi.logout : Mdi.login,
-
             size: .xs,
             style: .tonal,
-
             items: const [
-              M3ESplitButtonItem(value: 'refresh', child: Text('刷新登入状态')),
+              M3ESplitButtonItem(value: 'refresh', child: Text('以上次登录学号重新登入')),
               M3ESplitButtonItem(value: 'share', child: Text('以图片形式分享课表')),
             ],
-
             onPressed: () async {
               if (isLoggedIn) {
                 await _logout();
@@ -91,13 +80,11 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
                 await _openLoginPage();
               }
             },
-
             onSelected: (value) async {
               switch (value) {
                 case 'refresh':
                   await _refreshLoginStatus();
                   break;
-
                 case 'share':
                   await _shareClassSchedule();
                   break;
@@ -106,18 +93,15 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
           ),
         ],
       ),
-
       body: HomePage(classWidgetKey: classWidgetKey),
     );
   }
 
   Future<void> _openLoginPage() async {
     final success = await LoginPage.open(context);
-
     if (!mounted) {
       return;
     }
-
     if (success) {
       await ref.read(scheduleProvider.notifier).initialize();
     }
@@ -125,70 +109,87 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
 
   Future<void> _logout() async {
     await ref.read(authProvider.notifier).logout();
-
     if (!mounted) {
       return;
     }
-
     _showMessage('已退出登入');
   }
 
   Future<void> _refreshLoginStatus() async {
     HapticFeedback.lightImpact();
-
-    final success = await ref.read(authProvider.notifier).checkLogin();
-
+    debugShow('开始重新登入流程');
+    final authNotifier = ref.read(authProvider.notifier);
+    final account = await authNotifier.getCurrentSavedAccount();
     if (!mounted) {
       return;
     }
-
-    if (success) {
+    await authNotifier.logout();
+    if (!mounted) {
+      return;
+    }
+    debugShow('当前登入状态已清除');
+    if (account == null) {
+      debugShow('没有保存的账号, 打开登入弹窗');
+      _showMessage('账号密码未储存, 请手动登入');
+      final success = await LoginPage.open(context);
+      if (!mounted) {
+        return;
+      }
+      if (success) {
+        await ref.read(scheduleProvider.notifier).initialize();
+      }
+      return;
+    }
+    debugShow(
+      '使用当前保存的账号重新登入：'
+      '${account.username}',
+    );
+    Fluttertoast.showToast(msg: '正在重新登入...');
+    final success = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            LoginPage(username: account.username, password: account.password),
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (success == true) {
       await ref.read(scheduleProvider.notifier).initialize();
+      if (!mounted) {
+        return;
+      }
+      _showMessage('重新登入成功');
+    } else {
+      _showMessage('重新登入失败');
     }
-
-    if (!mounted) {
-      return;
-    }
-
-    _showMessage(success ? '登入状态有效' : '当前未登入');
   }
 
   Future<void> _shareClassSchedule() async {
     HapticFeedback.lightImpact();
-
     try {
       await WidgetsBinding.instance.endOfFrame;
-
       if (!mounted) {
         return;
       }
-
       final renderObject = classWidgetKey.currentContext?.findRenderObject();
-
       if (renderObject is! RenderRepaintBoundary) {
         _showMessage('课表还没有准备好, 请稍后再试');
         return;
       }
-
       final renderBox = renderObject;
-
       final sharePositionOrigin =
           renderBox.localToGlobal(Offset.zero) & renderBox.size;
-
       final ui.Image image = await renderObject.toImage(pixelRatio: 3.0);
-
       try {
         final ByteData? byteData = await image.toByteData(
           format: ui.ImageByteFormat.png,
         );
-
         if (byteData == null) {
           _showMessage('生成课表图片失败');
           return;
         }
-
         final Uint8List bytes = byteData.buffer.asUint8List();
-
         final result = await SharePlus.instance.share(
           ShareParams(
             title: '分享课表',
@@ -201,7 +202,6 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
             sharePositionOrigin: sharePositionOrigin,
           ),
         );
-
         debugShow(
           '分享结果: '
           '${result.status}',
@@ -211,9 +211,7 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
       }
     } catch (e, stackTrace) {
       debugShow('分享课表失败: $e');
-
       debugShow(stackTrace.toString());
-
       if (mounted) {
         _showMessage('分享课表失败');
       }
@@ -224,7 +222,6 @@ class _WidgetTreeState extends ConsumerState<WidgetTree> {
     if (!mounted) {
       return;
     }
-
     Fluttertoast.showToast(msg: message);
   }
 }

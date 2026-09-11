@@ -7,6 +7,7 @@ import 'package:new_zhic_tool/model/training.dart';
 import 'package:new_zhic_tool/provider/auth_notifier.dart';
 import 'package:new_zhic_tool/provider/training_provider.dart';
 import 'package:new_zhic_tool/widget/bottomsheet_widget.dart';
+import 'package:new_zhic_tool/widget/chip_widget.dart';
 import 'package:new_zhic_tool/widget/error_page.dart';
 import 'package:new_zhic_tool/widget/load_page.dart';
 
@@ -207,15 +208,7 @@ class _TrainingSearchPageState extends ConsumerState<TrainingSearchPage> {
     if (!isLoggedIn) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: ErrorPage(
-              text: '当前未登入, 请先登入账号',
-              icon: Mdi.accountAlertOutline,
-            ),
-          ),
-        ),
+        body: ErrorPage(text: '当前未登入, 请先登入账号', icon: Mdi.accountAlertOutline),
       );
     }
 
@@ -435,6 +428,7 @@ class _TrainingSearchResultCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(
+              spacing: 3,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -443,27 +437,23 @@ class _TrainingSearchResultCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${result.module.name} · ${result.subModule.name}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ChipWidget(
+                  text: '${result.module.name} · ${result.subModule.name}',
+                  isPrimary: isCompleted,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '成绩: ${course.score}│'
-                  '绩点: ${course.gpa}│'
-                  '${course.status}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: isCompleted
-                        ? colorScheme.primary
-                        : colorScheme.outline,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  spacing: 5,
+                  children: [
+                    ChipWidget(
+                      text: '成绩: ${course.score}',
+                      isPrimary: isCompleted,
+                    ),
+                    ChipWidget(
+                      text: '绩点: ${course.gpa}',
+                      isPrimary: isCompleted,
+                    ),
+                    ChipWidget(text: course.status, isPrimary: isCompleted),
+                  ],
                 ),
               ],
             ),

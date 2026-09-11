@@ -2,13 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
+import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/icon.dart';
+import 'package:new_zhic_tool/widget/chip_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 class AboutPage extends StatefulWidget {
@@ -17,16 +20,23 @@ class AboutPage extends StatefulWidget {
   State<AboutPage> createState() => _AboutPageState();
 }
 
-class _AboutPageState extends State<AboutPage> {
-  String _currentVersion = 'v2.0.0';
+class _AboutPageState extends State<AboutPage>
+    with SingleTickerProviderStateMixin {
+  String _currentVersion = 'v2.0.1';
   bool _isChecking = false;
   int _clickCount = 0;
+
+  late AnimationController _animationController;
+
+  static const String _kPrefsClickCount = 'about_icon_click_count';
+  static const String _kPrefsAnimationValue = 'about_icon_animation_value';
+
   static const List<String> _funQuotes = [
     '别点了！',
-    '生活明朗，万物可爱，除了教务系统。',
+    '生活明朗, 万物可爱, 除了教务系统.',
     '今天又是努力的一天呢！',
     '正在加载中环好运气... 100%！',
-    '这只猫其实是中环校猫。',
+    '这只猫其实是中环校猫.',
   ];
   static const String _releaseApiUrl =
       'https://api.github.com/repos/wzk0/new_zhic_tool/releases/latest';
@@ -36,9 +46,43 @@ class _AboutPageState extends State<AboutPage> {
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(vsync: this);
+    _loadSavedState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPackageInfo();
     });
+  }
+
+  Future<void> _loadSavedState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedCount = prefs.getInt(_kPrefsClickCount) ?? 0;
+      final savedValue = prefs.getDouble(_kPrefsAnimationValue) ?? 0.0;
+      if (savedCount > 0 && mounted) {
+        setState(() {
+          _clickCount = savedCount;
+        });
+        final durationMs = (15000 / _clickCount).clamp(30, 15000).toInt();
+        _animationController.duration = Duration(milliseconds: durationMs);
+        _animationController.value = savedValue.clamp(0.0, 1.0);
+        _animationController.repeat();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_kPrefsClickCount, _clickCount);
+      await prefs.setDouble(_kPrefsAnimationValue, _animationController.value);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _saveState();
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPackageInfo() async {
@@ -92,10 +136,10 @@ class _AboutPageState extends State<AboutPage> {
       }
       _showUpdateDialog(latestVersion, downloadUrl);
     } on TimeoutException {
-      Fluttertoast.showToast(msg: '检查更新超时，请检查网络');
+      Fluttertoast.showToast(msg: '检查更新超时, 请检查网络');
     } catch (e) {
       debugPrint('检查更新失败: $e');
-      Fluttertoast.showToast(msg: '无法连接到服务器，请检查网络');
+      Fluttertoast.showToast(msg: '无法连接到服务器, 请检查网络');
     } finally {
       if (mounted) {
         setState(() {
@@ -106,24 +150,28 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   void _showUpdateDialog(String version, String url) {
+    Confetti.launch(
+      context,
+      options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
+    );
     if (!mounted) return;
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('发现新版本'),
-          content: Text('检测到新版本 $version，是否前往 GitHub 下载？'),
+          content: Text('检测到新版本 $version, 是否前往 GitHub 下载? '),
           actions: [
-            TextButton(
+            M3EButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
+              style: .text,
               child: const Text('取消'),
             ),
-            TextButton(
+            M3EButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
-
                 await _openUrl(url, failureMessage: '无法打开下载页面');
               },
               child: const Text('去更新'),
@@ -151,16 +199,46 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   void _onIconTap() {
+    HapticFeedback.lightImpact();
+    Confetti.launch(
+      context,
+      options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
+    );
     setState(() {
       _clickCount++;
     });
+    final durationMs = (15000 / _clickCount).clamp(30, 15000).toInt();
+    _animationController.duration = Duration(milliseconds: durationMs);
+    _animationController.repeat();
+    _saveState();
+
     String message;
     if (_clickCount % 3 == 0) {
-      message = '你已经点了 $_clickCount 次了，不累吗？';
+      message = '你已经点了 $_clickCount 次了, 不累吗? ';
     } else {
       message = _funQuotes[Random().nextInt(_funQuotes.length)];
     }
     Fluttertoast.showToast(msg: message);
+  }
+
+  Future<void> _onIconLongPress() async {
+    HapticFeedback.heavyImpact();
+    setState(() {
+      _clickCount = 0;
+    });
+    _animationController.stop();
+    await _saveState();
+    if (!mounted) return;
+
+    Fluttertoast.showToast(
+      msg: '已停止旋转!',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+    Confetti.launch(
+      context,
+      options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
+    );
   }
 
   @override
@@ -173,11 +251,11 @@ class _AboutPageState extends State<AboutPage> {
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         children: [
           _buildHeader(context, colorScheme, textTheme),
-          const SizedBox(height: 22),
+          const SizedBox(height: 28),
           _buildInfoCard(
             context,
             title: '关于掌环',
-            content: '掌环旨在为天津理工大学中环信息学院的同学们提供更便捷的校园生活体验。本应用代码全部开源，不包含任何恶意采集数据的行为。所有数据来源均来自学校官网公开 API。',
+            content: '掌环旨在为天津理工大学中环信息学院的同学们提供更便捷的校园生活体验. 本应用代码全部开源, 不包含任何恶意采集数据的行为. 所有数据来源均来自学校官网公开 API.',
           ),
           const SizedBox(height: 12),
           Padding(
@@ -193,15 +271,16 @@ class _AboutPageState extends State<AboutPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
+              alignment: .center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                _buildTechChip('Flutter'),
-                _buildTechChip('Material Design 3 Expressive'),
-                _buildTechChip('Riverpod'),
-                _buildTechChip('InAppWebView'),
-                _buildTechChip('Shared Preferences'),
-                _buildTechChip('Http'),
+                ChipWidget(text: 'Flutter'),
+                ChipWidget(text: 'Material Design 3 Expressive'),
+                ChipWidget(text: 'Riverpod'),
+                ChipWidget(text: 'InAppWebView'),
+                ChipWidget(text: 'Shared Preferences'),
+                ChipWidget(text: 'Http'),
               ],
             ),
           ),
@@ -236,7 +315,7 @@ class _AboutPageState extends State<AboutPage> {
 
           Center(
             child: Text(
-              '© 2025-2026 wzk0 & thdbd.\nAll Rights Reserved.',
+              '© 2026 wzk0 & thdbd\nAll Rights Reserved.',
               textAlign: TextAlign.center,
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.outline,
@@ -254,22 +333,26 @@ class _AboutPageState extends State<AboutPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
+    final iconContainer = CircleAvatar(
+      radius: 45,
+      child: Image.asset('assets/images/icon.png', height: 60, width: 60),
+    );
+
     return Column(
       children: [
         GestureDetector(
           onTap: _onIconTap,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset('assets/images/icon.png', height: 60, width: 60),
-          ),
+          onLongPress: _onIconLongPress,
+          child: _clickCount > 0
+              ? RotationTransition(
+                  turns: _animationController,
+                  child: iconContainer,
+                )
+              : iconContainer,
         ),
         const SizedBox(height: 16),
         Text(
-          '掌环 (zhic_tool)',
+          '掌环 (new_zhic_tool)',
           style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 2),
@@ -304,22 +387,9 @@ class _AboutPageState extends State<AboutPage> {
             title,
             style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
-          Text(content, style: textTheme.bodyMedium),
+          Text(content, style: textTheme.bodySmall),
         ],
       ),
-    );
-  }
-
-  Widget _buildTechChip(String label) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return M3ESegmentedItem(
-      padding: .fromLTRB(8, 5, 8, 5),
-      index: 1,
-      position: .first,
-      outerRadius: 8,
-      innerRadius: 8,
-      child: Text(label, style: textTheme.labelSmall),
     );
   }
 
@@ -329,8 +399,6 @@ class _AboutPageState extends State<AboutPage> {
     required String title,
     bool isLoading = false,
   }) {
-    Theme.of(context).colorScheme;
-    Theme.of(context).textTheme;
     return Row(
       mainAxisAlignment: .spaceBetween,
       children: [
