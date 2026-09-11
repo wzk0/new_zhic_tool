@@ -29,7 +29,9 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          rm -f ~/.pub-cache/credentials.json
+          flutter pub get
 
       - name: Decode Keystore
         run: |
@@ -65,7 +67,7 @@ jobs:
         with:
           files: |
             build/outputs/release-artifacts/*.apk
-          generate_release_notes: true # 自动根据 git commit 生成更新日志
+          generate_release_notes: true
           body: |
             ## 掌环 ${{ github.ref_name }} 版本发布 🚀
             
