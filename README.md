@@ -1,17 +1,93 @@
-# new_zhic_tool
+# 掌环 2.0
 
-A new Flutter project.
+<p align="center">
+  一款面向天津理工大学中环信息学院学生的校园助手,
+  <br>
+  基于 Flutter 构建, 为校园学习与日常生活提供便捷的一站式服务.
+</p>
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## ✨ 功能特性
 
-A few resources to get you started if this is your first Flutter project:
+### 📚 学习与教务
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+* **课表查询**: 在线获取课表, 并支持缓存至本地; 启动时优先尝试获取最新课表, 获取失败时自动使用本地缓存.
+* **培养方案**: 便捷查看个人培养方案及课程完成情况.
+* **空教室查询**: 快速查询空闲教室.
+* **成绩查询**: 随时查看课程成绩.
+* **考试查询**: 查看考试安排, 及时掌握考试信息.
+* **校历查看**: 快速查阅学校校历.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 📝 题库共享
+
+* **期末题库**: 共享期末考试题库, 支持免费下载、自由分发.
+* **自主上传**: 支持提交题库资源, 与其他同学共同完善资料库.
+
+### 🏫 校园服务
+
+* **在线图书馆**: 访问学校图书馆相关服务.
+* **选课与评教**: 便捷使用在线选课、教学评价功能.
+* **请假服务**: 在线访问请假相关功能.
+* **学信网**: 支持在线查看学信网.
+* **考试服务**: 在线查看或报名四六级、计算机二级等考试.
+
+### ⚙️ 其他功能
+
+* **账号管理**: 本地保存最多 5 组账号密码, 支持快速选择与一键登录.
+* **更新检测**: 及时检查应用更新.
+* **更多功能**: 持续探索与完善中……
+
+---
+
+## 📤 题库上传
+
+欢迎大家共同维护题库资源, 为更多同学提供学习帮助！
+
+1. Fork 题库仓库: 
+   [zhanghuan_data](https://gitee.com/thdbd/zhanghuan_data)
+2. 添加或更新题库文件.
+3. 提交更改前, 运行 `update.py` 生成最新索引.
+4. Push 并提交 Pull Request (PR).
+
+---
+
+## 🔨 编译指南
+
+### 环境要求
+
+* Flutter SDK
+* Android 开发环境
+
+### 编译步骤
+
+1. 克隆本仓库: 
+
+   ```bash
+   git clone https://github.com/wzk0/new_zhic_tool
+   cd new_zhic_tool
+   ```
+
+2. 获取依赖: 
+
+   ```bash
+   flutter pub get
+   ```
+
+3. 移除或配置项目中的签名代码.
+
+4. 编译 Android ARM64 APK: 
+
+   ```bash
+   flutter build apk --target-platform android-arm64
+   ```
+
+编译完成后, 可在 `build/app/outputs/flutter-apk/` 目录下找到生成的 APK 文件.
+
+---
+
+## 💡 项目初衷
+
+掌环希望将校园中常用的教务查询、学习资料与在线服务整合到一个应用中, 减少繁琐的操作, 让校园生活更加简单、高效.
+
+欢迎体验、反馈问题, 也欢迎参与项目开发与题库共建!

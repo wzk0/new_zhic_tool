@@ -214,13 +214,12 @@ class _LoginDialogState extends State<_LoginDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('登入'),
-
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            spacing: 12,
+            spacing: 10,
             children: [
               if (widget.savedAccounts.isNotEmpty) ...[
                 ...widget.savedAccounts.asMap().entries.map((entry) {
@@ -242,7 +241,6 @@ class _LoginDialogState extends State<_LoginDialog> {
                         '点击保存账号, '
                         '直接登入：$username',
                       );
-
                       Navigator.of(
                         context,
                       ).pop(LoginInfo(username: username, password: password));
@@ -278,17 +276,13 @@ class _LoginDialogState extends State<_LoginDialog> {
                           onPressed: () async {
                             debugShow('删除保存账号：$username');
                             HapticFeedback.lightImpact();
-
                             await LoginPage._deleteSavedAccount(username);
-
                             if (!mounted) {
                               return;
                             }
-
                             if (index >= widget.savedAccounts.length) {
                               return;
                             }
-
                             setState(() {
                               widget.savedAccounts.removeAt(index);
                             });
@@ -339,7 +333,7 @@ class _LoginDialogState extends State<_LoginDialog> {
                       });
                     },
                   ),
-                  Text('储存账号密码'),
+                  const Text('储存账号密码'),
                 ],
               ),
             ],
@@ -446,15 +440,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
     if (_autoLoginTriggered) {
-      debugShow('自动登入已经触发过');
+      debugShow('自动登入已经触发过, 跳过重复提交');
       return;
     }
-
-    debugShow('开始快速自动填写 CAS 登入');
-
-    final result = await controller.evaluateJavascript(
-      source:
-          '''
+    _autoLoginTriggered = true;
+    debugShow('开始单次自动填写 CAS 登入');
+    try {
+      final result = await controller.evaluateJavascript(
+        source:
+            '''
 (() => {
   return new Promise((resolve) => {
     const encodedUsername = ${jsonEncode(widget.username)};
@@ -462,92 +456,222 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     const maxAttempts = 50;
     const intervalMs = 30;
     let attempts = 0;
-
     function findInputs() {
-      const inputs = Array.from(document.querySelectorAll('input'));
+      const inputs = Array.from(
+        document.querySelectorAll('input')
+      );
       let username = inputs.find(i =>
-        i.placeholder?.includes('教工号') || i.placeholder?.includes('学号')
+        i.placeholder?.includes('教工号') ||
+        i.placeholder?.includes('学号')
       );
       let password = inputs.find(i =>
-        i.type === 'password' || i.placeholder?.includes('密码')
+        i.type === 'password' ||
+        i.placeholder?.includes('密码')
       );
-      if (!username) username = inputs.find(i => i.type === 'text');
+      if (!username) {
+        username = inputs.find(i => i.type === 'text');
+      }
       if (!password) {
         password = inputs.find(i =>
-          i !== username && (i.type === 'password' || i.autocomplete === 'current-password')
+          i !== username &&
+          (
+            i.type === 'password' ||
+            i.autocomplete === 'current-password'
+          )
         );
       }
       return { username, password };
     }
-
     function setNativeValue(input, value) {
-      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      const descriptor =
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        );
+
+      if (!descriptor || !descriptor.set) {
+        return false;
+      }
+
       input.focus();
-      setter.call(input, value);
-      input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true, inputType: 'insertText', data: value }));
-      input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-      input.dispatchEvent(new Event('blur', { bubbles: true, composed: true }));
+
+      descriptor.set.call(input, value);
+
+      input.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          composed: true,
+          inputType: 'insertText',
+          data: value
+        })
+      );
+
+      input.dispatchEvent(
+        new Event('change', {
+          bubbles: true,
+          composed: true
+        })
+      );
+
+      input.dispatchEvent(
+        new Event('blur', {
+          bubbles: true,
+          composed: true
+        })
+      );
+
+      return true;
     }
 
     function findAndClickButton() {
-      const selectors = ['button', 'a', 'input', 'div', 'span', '[role="button"]'];
-      const elements = Array.from(document.querySelectorAll(selectors.join(',')));
+      const selectors = [
+        'button',
+        'a',
+        'input',
+        'div',
+        'span',
+        '[role="button"]'
+      ];
+
+      const elements = Array.from(
+        document.querySelectorAll(selectors.join(','))
+      );
 
       function visible(el) {
         const rect = el.getBoundingClientRect();
         const style = window.getComputedStyle(el);
-        return rect.width > 0 && rect.height > 0 &&
-               style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+
+        return rect.width > 0 &&
+               rect.height > 0 &&
+               style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
+               style.opacity !== '0';
       }
 
       function textOf(el) {
-        return (el.innerText || el.textContent || el.value || el.getAttribute('value') || '').trim().toLowerCase();
+        return (
+          el.innerText ||
+          el.textContent ||
+          el.value ||
+          el.getAttribute('value') ||
+          ''
+        ).trim().toLowerCase();
       }
 
       function score(el) {
         let s = 0;
         const text = textOf(el);
-        const className = (typeof el.className === 'string' ? el.className : '').toLowerCase();
-        const id = (el.id || '').toLowerCase();
-        const type = (el.getAttribute('type') || '').toLowerCase();
-        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
 
-        if (text === '登录' || text === '登入' || text === 'login' || text === 'sign in') s += 100;
-        else if (text.includes('登录') || text.includes('登入') || text.includes('login')) s += 60;
+        const className = (
+          typeof el.className === 'string'
+            ? el.className
+            : ''
+        ).toLowerCase();
+
+        const id = (el.id || '').toLowerCase();
+
+        const type = (
+          el.getAttribute('type') || ''
+        ).toLowerCase();
+
+        const aria = (
+          el.getAttribute('aria-label') || ''
+        ).toLowerCase();
+
+        if (
+          text === '登录' ||
+          text === '登入' ||
+          text === 'login' ||
+          text === 'sign in'
+        ) {
+          s += 100;
+        } else if (
+          text.includes('登录') ||
+          text.includes('登入') ||
+          text.includes('login')
+        ) {
+          s += 60;
+        }
+
         if (type === 'submit') s += 40;
-        if (id.includes('login') || id.includes('submit')) s += 30;
-        if (className.includes('login') || className.includes('submit') || className.includes('btn')) s += 20;
-        if (aria.includes('登录') || aria.includes('login')) s += 20;
+
+        if (
+          id.includes('login') ||
+          id.includes('submit')
+        ) {
+          s += 30;
+        }
+
+        if (
+          className.includes('login') ||
+          className.includes('submit') ||
+          className.includes('btn')
+        ) {
+          s += 20;
+        }
+
+        if (
+          aria.includes('登录') ||
+          aria.includes('login')
+        ) {
+          s += 20;
+        }
+
         return s;
       }
 
       let candidates = elements
-        .filter(el => visible(el) && el.disabled !== true && score(el) > 0)
+        .filter(el =>
+          visible(el) &&
+          el.disabled !== true &&
+          score(el) > 0
+        )
         .sort((a, b) => score(b) - score(a));
 
       if (candidates.length === 0) {
         const form = document.querySelector('form');
         if (form) {
-          candidates = Array.from(form.querySelectorAll('button, input[type="submit"], input[type="button"]'))
-            .filter(el => visible(el) && el.disabled !== true);
+          candidates = Array.from(
+            form.querySelectorAll(
+              'button, input[type="submit"], input[type="button"]'
+            )
+          ).filter(el =>
+            visible(el) &&
+            el.disabled !== true
+          );
         }
       }
 
       if (candidates.length === 0) {
-        candidates = elements.filter(el => el.tagName === 'BUTTON' && visible(el) && el.disabled !== true);
+        candidates = elements.filter(el =>
+          el.tagName === 'BUTTON' &&
+          visible(el) &&
+          el.disabled !== true
+        );
       }
 
-      if (candidates.length === 0) return null;
+      if (candidates.length === 0) {
+        return null;
+      }
 
       const element = candidates[0];
-      element.scrollIntoView({ behavior: 'instant', block: 'center' });
-      if (typeof element.focus === 'function') element.focus();
-      element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window, buttons: 1 }));
-      element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window, buttons: 1 }));
-      element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-      if (typeof element.click === 'function') element.click();
 
-      return { tag: element.tagName, text: textOf(element) };
+      element.scrollIntoView({
+        behavior: 'instant',
+        block: 'center'
+      });
+
+      if (typeof element.focus === 'function') {
+        element.focus();
+      }
+
+      // 只调用一次 click, 避免重复提交。
+      element.click();
+
+      return {
+        tag: element.tagName,
+        text: textOf(element)
+      };
     }
 
     function attempt() {
@@ -555,24 +679,57 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       const { username, password } = findInputs();
 
       if (username && password) {
-        
-        setNativeValue(username, encodedUsername);
-        setNativeValue(password, encodedPassword);
+        const usernameSet = setNativeValue(
+          username,
+          encodedUsername
+        );
 
-        
+        const passwordSet = setNativeValue(
+          password,
+          encodedPassword
+        );
+
+        if (!usernameSet || !passwordSet) {
+          resolve({
+            success: false,
+            filled: false,
+            clicked: false,
+            reason: 'input_set_failed'
+          });
+
+          return;
+        }
+
         requestAnimationFrame(() => {
           const btn = findAndClickButton();
           if (btn) {
-            resolve({ success: true, filled: true, clicked: true, tag: btn.tag, text: btn.text });
+            resolve({
+              success: true,
+              filled: true,
+              clicked: true,
+              tag: btn.tag,
+              text: btn.text
+            });
           } else {
-            resolve({ success: true, filled: true, clicked: false, reason: 'login_control_not_found' });
+            resolve({
+              success: true,
+              filled: true,
+              clicked: false,
+              reason: 'login_control_not_found'
+            });
           }
         });
         return;
       }
 
       if (attempts >= maxAttempts) {
-        resolve({ success: false, filled: false, clicked: false, reason: 'timeout' });
+        resolve({
+          success: false,
+          filled: false,
+          clicked: false,
+          reason: 'timeout'
+        });
+
         return;
       }
 
@@ -583,17 +740,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   });
 })();
 ''',
-    );
+      );
+      debugShow('自动填表与点击结果：$result');
+      if (!mounted) return;
+      if (result is Map && result['filled'] == true) {
+        if (result['clicked'] == true) {
+          debugShow('自动登入已提交一次, 等待页面跳转');
+        } else {
+          debugShow('自动填写完成, 但未能点击登入按钮, 请手动操作');
 
-    debugShow('自动填表与点击结果：$result');
-
-    if (!mounted) return;
-
-    if (result is Map && result['clicked'] == true) {
-      _autoLoginTriggered = true;
-      debugShow('登入控件点击成功, 等待页面跳转');
-    } else {
-      debugShow('未能自动点击登入按钮, 请手动点击');
+          Fluttertoast.showToast(msg: '自动登录未能提交, 请手动点击登录');
+        }
+      } else {
+        debugShow('自动填写失败, 已停止自动尝试');
+      }
+    } catch (e, stackTrace) {
+      debugShow('自动登入执行失败：$e');
+      debugShow(stackTrace.toString());
     }
   }
 
