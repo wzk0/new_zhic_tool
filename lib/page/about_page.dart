@@ -22,7 +22,7 @@ class AboutPage extends StatefulWidget {
 
 class _AboutPageState extends State<AboutPage>
     with SingleTickerProviderStateMixin {
-  String _currentVersion = 'v2.0.1';
+  String _currentVersion = 'v2.0.2';
   bool _isChecking = false;
   int _clickCount = 0;
 
@@ -41,7 +41,7 @@ class _AboutPageState extends State<AboutPage>
   static const String _releaseApiUrl =
       'https://api.github.com/repos/wzk0/new_zhic_tool/releases/latest';
 
-  static const String _sourceCodeUrl = 'https://github.com/wzk0/zhanghuan';
+  static const String _sourceCodeUrl = 'https://github.com/wzk0/new_zhic_tool';
 
   @override
   void initState() {

@@ -1,6 +1,6 @@
 name: new_zhic_tool
 description: "A new zhic tool."
-version: 2.0.1
+version: 2.0.2
 
 environment:
   sdk: ^3.13.2
@@ -24,7 +24,7 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_launcher_icons: ^0.14.4
   package_info_plus: ^10.2.1
-  file_picker: ^12.2.0
+  file_picker: ^13.1.0
 
 dev_dependencies:
   flutter_test:
