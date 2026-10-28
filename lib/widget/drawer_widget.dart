@@ -20,6 +20,7 @@ import 'package:new_zhic_tool/page/library_page.dart';
 import 'package:new_zhic_tool/page/neea_page.dart';
 import 'package:new_zhic_tool/page/question_bank_page.dart';
 import 'package:new_zhic_tool/page/score_page.dart';
+import 'package:new_zhic_tool/page/setting_page.dart';
 import 'package:new_zhic_tool/page/training_plan_page.dart';
 import 'package:new_zhic_tool/page/xuexinwang_page.dart';
 import 'package:new_zhic_tool/provider/auth_notifier.dart';
@@ -142,6 +143,12 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
       ),
     ],
     [
+      DrawerItemConfig(
+        icon: Mdi.cogOutline,
+        title: '设置',
+        subtitle: '外观与主题色',
+        targetPage: SettingPage(),
+      ),
       DrawerItemConfig(
         icon: Mdi.helpCircleOutline,
         title: '帮助',

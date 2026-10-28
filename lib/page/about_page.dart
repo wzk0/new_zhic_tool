@@ -10,6 +10,7 @@ import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/avatar_spin.dart';
 import 'package:new_zhic_tool/core/icon.dart';
+import 'package:new_zhic_tool/page/donation_page.dart';
 import 'package:new_zhic_tool/widget/chip_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
@@ -269,6 +270,12 @@ class _AboutPageState extends State<AboutPage>
             children: [
               _buildActionCard(
                 context,
+                icon: Mdi.coffeeOutline,
+                title: '赞赏作者',
+                subtitle: '微信 / 支付宝赞赏码',
+              ),
+              _buildActionCard(
+                context,
                 icon: Mdi.codeBraces,
                 title: '项目源代码',
                 subtitle: '在 GitHub 查看并参与开发',
@@ -284,10 +291,16 @@ class _AboutPageState extends State<AboutPage>
             onTap: (index) {
               switch (index) {
                 case 0:
-                  _openUrl(_sourceCodeUrl, failureMessage: '无法打开项目页面');
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DonationPage()),
+                  );
                   break;
 
                 case 1:
+                  _openUrl(_sourceCodeUrl, failureMessage: '无法打开项目页面');
+                  break;
+
+                case 2:
                   if (!_isChecking) {
                     _checkUpdate();
                   }

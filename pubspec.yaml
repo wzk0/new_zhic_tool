@@ -25,6 +25,7 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   package_info_plus: ^10.2.1
   file_picker: ^13.1.0
+  gal: ^2.3.3
 
 dev_dependencies:
   flutter_test:
@@ -35,7 +36,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/images/icon.png
+    - assets/images/
 
 flutter_launcher_icons:
     android: true
