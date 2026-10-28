@@ -3,9 +3,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/debug.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 主题设置: 是否使用 Monet(动态取色) 与自定义种子色。
-class ThemeSettings {
-  const ThemeSettings({this.useMonet = true, this.seedColorValue});
+/// 应用外观与显示设置。
+class AppSettings {
+  const AppSettings({
+    this.useMonet = true,
+    this.seedColorValue,
+    this.highlightTodayOnly = false,
+  });
 
   /// 默认种子色, 与旧版本一致。
   static const Color defaultSeedColor = Colors.deepPurple;
@@ -16,37 +20,50 @@ class ThemeSettings {
   /// 自定义种子色的 ARGB 值; null 表示未自定义。
   final int? seedColorValue;
 
+  /// 课表是否仅高亮"当天"; 关闭时每周的同一星期都会高亮。
+  final bool highlightTodayOnly;
+
   Color get seedColor =>
       seedColorValue == null ? defaultSeedColor : Color(seedColorValue!);
 
-  ThemeSettings copyWith({bool? useMonet, int? seedColorValue}) {
-    return ThemeSettings(
+  AppSettings copyWith({
+    bool? useMonet,
+    int? seedColorValue,
+    bool? highlightTodayOnly,
+    bool clearSeedColor = false,
+  }) {
+    return AppSettings(
       useMonet: useMonet ?? this.useMonet,
-      seedColorValue: seedColorValue ?? this.seedColorValue,
+      seedColorValue: clearSeedColor
+          ? null
+          : seedColorValue ?? this.seedColorValue,
+      highlightTodayOnly: highlightTodayOnly ?? this.highlightTodayOnly,
     );
   }
 }
 
-class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
+class SettingsNotifier extends Notifier<AppSettings> {
   static const String _useMonetKey = 'theme_use_monet';
   static const String _seedColorKey = 'theme_seed_color';
+  static const String _highlightTodayOnlyKey = 'schedule_highlight_today_only';
 
   @override
-  ThemeSettings build() {
+  AppSettings build() {
     Future.microtask(_restore);
-    return const ThemeSettings();
+    return const AppSettings();
   }
 
   Future<void> _restore() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      state = ThemeSettings(
+      state = AppSettings(
         useMonet: prefs.getBool(_useMonetKey) ?? true,
         seedColorValue: prefs.getInt(_seedColorKey),
+        highlightTodayOnly: prefs.getBool(_highlightTodayOnlyKey) ?? false,
       );
     } catch (e) {
-      debugShow('读取主题设置失败: $e');
+      debugShow('读取设置失败: $e');
     }
   }
 
@@ -60,6 +77,16 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     await _persist();
   }
 
+  Future<void> setHighlightTodayOnly(bool value) async {
+    if (state.highlightTodayOnly == value) {
+      return;
+    }
+
+    state = state.copyWith(highlightTodayOnly: value);
+
+    await _persist();
+  }
+
   Future<void> setSeedColor(Color color) async {
     final value = color.toARGB32();
 
@@ -67,7 +94,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       return;
     }
 
-    state = ThemeSettings(useMonet: state.useMonet, seedColorValue: value);
+    state = state.copyWith(seedColorValue: value);
 
     await _persist();
   }
@@ -77,7 +104,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       return;
     }
 
-    state = ThemeSettings(useMonet: state.useMonet);
+    state = state.copyWith(clearSeedColor: true);
 
     await _persist();
   }
@@ -85,22 +112,23 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   Future<void> _persist() async {
     final useMonet = state.useMonet;
     final seedColorValue = state.seedColorValue;
+    final highlightTodayOnly = state.highlightTodayOnly;
 
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_useMonetKey, useMonet);
+      await prefs.setBool(_highlightTodayOnlyKey, highlightTodayOnly);
       if (seedColorValue == null) {
         await prefs.remove(_seedColorKey);
       } else {
         await prefs.setInt(_seedColorKey, seedColorValue);
       }
     } catch (e) {
-      debugShow('保存主题设置失败: $e');
+      debugShow('保存设置失败: $e');
     }
   }
 }
 
-final themeSettingsProvider =
-    NotifierProvider<ThemeSettingsNotifier, ThemeSettings>(
-      ThemeSettingsNotifier.new,
-    );
+final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(
+  SettingsNotifier.new,
+);

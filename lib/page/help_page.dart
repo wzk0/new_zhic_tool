@@ -22,7 +22,7 @@ class HelpPage extends StatelessWidget {
     ),
     (
       title: '关于掌环的主题色',
-      body: Text('是根据系统壁纸自动取色生成 (Android 12+). 如果想要更换主色调, 可以先换个壁纸.'),
+      body: Text('默认根据系统壁纸自动取色生成 (Android 12+). 如果想要更换主色调, 可以先换个壁纸.'),
       icon: Mdi.informationOutline,
     ),
     (

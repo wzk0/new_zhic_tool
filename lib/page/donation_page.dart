@@ -16,16 +16,8 @@ class DonationPage extends StatefulWidget {
 
 class _DonationPageState extends State<DonationPage> {
   static const List<({String title, String asset, String fileName})> _codes = [
-    (
-      title: '微信',
-      asset: 'assets/images/wechat.png',
-      fileName: '掌环赞赏-微信',
-    ),
-    (
-      title: '支付宝',
-      asset: 'assets/images/alipay.jpg',
-      fileName: '掌环赞赏-支付宝',
-    ),
+    (title: '微信', asset: 'assets/images/wechat.png', fileName: '掌环赞赏-微信'),
+    (title: '支付宝', asset: 'assets/images/alipay.jpg', fileName: '掌环赞赏-支付宝'),
   ];
 
   /// 正在保存的图片资源, 用于只让对应按钮进入加载态。
@@ -96,19 +88,19 @@ class _DonationPageState extends State<DonationPage> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           Text(
-            '如果掌环帮到了你, 欢迎请作者喝杯咖啡',
+            '如果掌环帮到了你, 欢迎请俺喝杯咖啡☕',
             textAlign: TextAlign.center,
             style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
-            '长按图片识别, 或保存后使用微信 / 支付宝扫一扫',
+            '保存后使用微信 / 支付宝扫一扫就行啦, 多谢!',
             textAlign: TextAlign.center,
             style: textTheme.bodySmall?.copyWith(color: colorScheme.outline),
           ),
           const SizedBox(height: 24),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               for (final code in _codes) ...[
                 Expanded(
@@ -163,15 +155,11 @@ class _DonationPageState extends State<DonationPage> {
         M3EButton(
           onPressed: isBusy
               ? null
-              : () => _saveToGallery(
-                  asset: code.asset,
-                  fileName: code.fileName,
-                ),
+              : () =>
+                    _saveToGallery(asset: code.asset, fileName: code.fileName),
           style: .tonal,
           size: .xs,
-          child: isSaving
-              ? const M3ELoadingIndicator()
-              : const Text('保存到相册'),
+          child: isSaving ? const M3ELoadingIndicator() : const Text('保存到相册'),
         ),
       ],
     );

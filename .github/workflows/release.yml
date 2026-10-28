@@ -33,6 +33,9 @@ jobs:
           rm -f ~/.pub-cache/credentials.json
           flutter pub get
 
+      - name: Patch m3e_core compatibility
+        run: python3 tool/apply_dependency_patches.py    
+
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks

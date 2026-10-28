@@ -146,7 +146,7 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
       DrawerItemConfig(
         icon: Mdi.cogOutline,
         title: '设置',
-        subtitle: '外观与主题色',
+        subtitle: '外观与功能',
         targetPage: SettingPage(),
       ),
       DrawerItemConfig(

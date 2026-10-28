@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:new_zhic_tool/core/debug.dart';
+import 'package:new_zhic_tool/core/week_utils.dart';
 import 'package:new_zhic_tool/service/schedule_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -122,7 +123,7 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
         selectedSemester = semesters.first;
       }
 
-      final currentWeek = _getCurrentWeek(selectedSemester.startDate);
+      final currentWeek = currentWeekOf(selectedSemester.startDate);
 
       state = state.copyWith(
         semesters: semesters,
@@ -270,7 +271,7 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
 
     _loadGeneration++;
 
-    final week = _getCurrentWeek(semester.startDate);
+    final week = currentWeekOf(semester.startDate);
 
     state = state.copyWith(
       currentSemester: semester,
@@ -357,24 +358,6 @@ class ScheduleNotifier extends Notifier<ScheduleState> {
     );
 
     debugShow('已切换为登出状态, 个人信息与课表已全部清空');
-  }
-
-  int _getCurrentWeek(String startDate) {
-    try {
-      final start = DateTime.parse(startDate);
-      final today = DateTime.now();
-      final startDay = DateTime(start.year, start.month, start.day);
-      final todayDay = DateTime(today.year, today.month, today.day);
-      final difference = todayDay.difference(startDay).inDays;
-      if (difference < 0) {
-        return 1;
-      }
-      final week = difference ~/ 7 + 1;
-      return week.clamp(1, 20);
-    } catch (e) {
-      debugShow('计算当前周失败: $e');
-      return 1;
-    }
   }
 }
 

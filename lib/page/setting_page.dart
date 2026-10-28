@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/icon.dart';
-import 'package:new_zhic_tool/provider/theme_settings_notifier.dart';
+import 'package:new_zhic_tool/provider/settings_notifier.dart';
 import 'package:new_zhic_tool/widget/seed_color_picker.dart';
 
 class SettingPage extends ConsumerWidget {
@@ -11,30 +11,22 @@ class SettingPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(themeSettingsProvider);
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, top: 8, bottom: 12),
-            child: Text(
-              '外观',
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ),
+          _buildSectionTitle(context, '外观'),
           M3ESegmentedList(
             itemCount: 2,
             onTap: (index) {
               HapticFeedback.lightImpact();
               switch (index) {
                 case 0:
-                  ref
-                      .read(themeSettingsProvider.notifier)
-                      .setUseMonet(!settings.useMonet);
+                  notifier.setUseMonet(!settings.useMonet);
                   break;
                 case 1:
                   _pickSeedColor(context, ref, settings);
@@ -43,21 +35,51 @@ class SettingPage extends ConsumerWidget {
             },
             itemBuilder: (context, index) {
               return switch (index) {
-                0 => _buildMonetItem(context, ref, settings),
+                0 => _buildSwitchItem(
+                  context,
+                  icon: Mdi.paletteOutline,
+                  title: 'Monet 取色',
+                  subtitle: settings.useMonet ? '跟随系统壁纸' : '已关闭',
+                  value: settings.useMonet,
+                  onChanged: notifier.setUseMonet,
+                ),
                 1 => _buildSeedColorItem(context, settings),
                 _ => const SizedBox.shrink(),
               };
             },
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 16, 4, 0),
-            child: Text(
-              settings.useMonet
-                  ? '开启后主题色跟随系统壁纸(Android 12+), 关闭则使用自定义主题色。'
-                  : '当前使用自定义主题色生成的配色。',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.outline),
-            ),
+          _buildHint(
+            context,
+            settings.useMonet
+                ? '开启后主题色跟随系统壁纸(Android 12+), 关闭则使用自定义主题色。'
+                : '当前使用自定义主题色生成的配色。',
+          ),
+
+          const SizedBox(height: 8),
+          _buildSectionTitle(context, '课表'),
+          M3ESegmentedColumn(
+            children: [
+              _buildSwitchItem(
+                context,
+                icon: Mdi.calendarTodayOutline,
+                title: '仅突出显示当天',
+                subtitle: settings.highlightTodayOnly
+                    ? '仅高亮今天的日期'
+                    : '每周的同一星期都高亮',
+                value: settings.highlightTodayOnly,
+                onChanged: notifier.setHighlightTodayOnly,
+              ),
+            ],
+            onTap: (index) {
+              HapticFeedback.lightImpact();
+              notifier.setHighlightTodayOnly(!settings.highlightTodayOnly);
+            },
+          ),
+          _buildHint(
+            context,
+            settings.highlightTodayOnly
+                ? '课表中只有今天所在的那一周的当天使用主题色突出显示。'
+                : '课表中每周的同一天都使用主题色突出显示。',
           ),
         ],
       ),
@@ -67,7 +89,7 @@ class SettingPage extends ConsumerWidget {
   Future<void> _pickSeedColor(
     BuildContext context,
     WidgetRef ref,
-    ThemeSettings settings,
+    AppSettings settings,
   ) async {
     final color = await showSeedColorPicker(
       context,
@@ -78,37 +100,58 @@ class SettingPage extends ConsumerWidget {
       return;
     }
 
-    await ref.read(themeSettingsProvider.notifier).setSeedColor(color);
+    await ref.read(settingsProvider.notifier).setSeedColor(color);
   }
 
-  Widget _buildMonetItem(
-    BuildContext context,
-    WidgetRef ref,
-    ThemeSettings settings,
-  ) {
+  Widget _buildSectionTitle(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, top: 8, bottom: 12),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleSmall
+            ?.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildHint(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: Theme.of(context).colorScheme.outline),
+      ),
+    );
+  }
+
+  Widget _buildSwitchItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
     return Row(
       children: [
-        _buildIcon(context, Mdi.paletteOutline),
+        _buildIcon(context, icon),
         const SizedBox(width: 13),
         Expanded(
-          child: _buildTexts(
-            context,
-            title: 'Monet 取色',
-            subtitle: settings.useMonet ? '跟随系统壁纸' : '已关闭',
-          ),
+          child: _buildTexts(context, title: title, subtitle: subtitle),
         ),
         Switch(
-          value: settings.useMonet,
-          onChanged: (value) {
+          value: value,
+          onChanged: (next) {
             HapticFeedback.lightImpact();
-            ref.read(themeSettingsProvider.notifier).setUseMonet(value);
+            onChanged(next);
           },
         ),
       ],
     );
   }
 
-  Widget _buildSeedColorItem(BuildContext context, ThemeSettings settings) {
+  Widget _buildSeedColorItem(BuildContext context, AppSettings settings) {
     final seedColor = settings.seedColor;
 
     return Row(

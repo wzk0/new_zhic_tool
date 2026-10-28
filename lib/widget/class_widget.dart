@@ -12,6 +12,7 @@ class ClassWidget extends StatelessWidget {
     this.captureKey,
     this.currentWeek = 1,
     this.semesterStartDate,
+    this.highlightToday = true,
   });
 
   final List<Course> courses;
@@ -21,6 +22,9 @@ class ClassWidget extends StatelessWidget {
   final int currentWeek;
 
   final String? semesterStartDate;
+
+  /// 是否高亮今天所在的列; 关闭时每周的同一星期都不再高亮。
+  final bool highlightToday;
 
   static const int totalUnits = 12;
 
@@ -94,7 +98,7 @@ class ClassWidget extends StatelessWidget {
                 weekday: i + 1,
                 date: monday.add(Duration(days: i)),
                 courses: coursesByWeekday[i + 1] ?? const <Course>[],
-                isToday: (i + 1) == todayWeekday,
+                isToday: highlightToday && (i + 1) == todayWeekday,
               ),
             ),
         ],
@@ -151,7 +155,8 @@ class ClassWidget extends StatelessWidget {
   Widget _buildTimeColumn(BuildContext context, {required DateTime now}) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final currentUnit = _getCurrentUnit(now);
+    // 不突出当天时也不再标记当前节次, 避免在其他周次造成误导。
+    final currentUnit = highlightToday ? _getCurrentUnit(now) : null;
 
     return SizedBox(
       width: 32,

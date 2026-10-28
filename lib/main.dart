@@ -1,7 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:new_zhic_tool/provider/theme_settings_notifier.dart';
+import 'package:new_zhic_tool/provider/settings_notifier.dart';
 import 'package:new_zhic_tool/widget_tree.dart';
 
 void main() {
@@ -13,7 +13,7 @@ class Zhanghuan extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(themeSettingsProvider);
+    final settings = ref.watch(settingsProvider);
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
@@ -30,7 +30,7 @@ class Zhanghuan extends ConsumerWidget {
   ThemeData _buildTheme(
     Brightness brightness,
     ColorScheme? dynamicScheme,
-    ThemeSettings settings,
+    AppSettings settings,
   ) {
     final colorScheme = settings.useMonet && dynamicScheme != null
         ? dynamicScheme
