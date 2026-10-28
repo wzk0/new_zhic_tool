@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/debug.dart';
+import 'package:new_zhic_tool/core/icon.dart';
 import 'package:new_zhic_tool/provider/auth_notifier.dart';
 import 'package:new_zhic_tool/provider/schedule_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -272,7 +273,7 @@ class _LoginDialogState extends State<_LoginDialog> {
                         ),
                         IconButton(
                           tooltip: '删除',
-                          icon: const Icon(Icons.delete_outline),
+                          icon: const Icon(Mdi.deleteOutline),
                           onPressed: () async {
                             debugShow('删除保存账号：$username');
                             HapticFeedback.lightImpact();
@@ -301,7 +302,7 @@ class _LoginDialogState extends State<_LoginDialog> {
                   isDense: true,
                   labelText: '学号',
                   hintText: '请输入学号',
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: Icon(Mdi.cardAccountDetailsOutline),
                   border: OutlineInputBorder(),
                 ),
                 onSubmitted: (_) {
@@ -316,7 +317,7 @@ class _LoginDialogState extends State<_LoginDialog> {
                   isDense: true,
                   labelText: '密码',
                   hintText: '请输入密码',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  prefixIcon: Icon(Mdi.lockOutline),
                   border: OutlineInputBorder(),
                 ),
                 onSubmitted: (_) async {

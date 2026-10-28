@@ -4,28 +4,23 @@ import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/icon.dart';
 
-class BottomsheetWidget extends StatefulWidget {
+class BottomsheetWidget extends StatelessWidget {
   final List<Map<String, dynamic>> items;
 
   const BottomsheetWidget({super.key, required this.items});
 
-  @override
-  State<BottomsheetWidget> createState() => _BottomsheetWidgetState();
-}
-
-class _BottomsheetWidgetState extends State<BottomsheetWidget> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: .zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [_buildPart(widget.items)],
+        children: [_buildPart(context, items)],
       ),
     );
   }
 
-  Widget _buildPart(List<Map<String, dynamic>> items) {
+  Widget _buildPart(BuildContext context, List<Map<String, dynamic>> items) {
     return M3ESegmentedList(
       itemCount: items.length,
       onTap: (index) {
@@ -41,13 +36,18 @@ class _BottomsheetWidgetState extends State<BottomsheetWidget> {
       },
       itemBuilder: (context, index) {
         final item = items[index];
+        final name = item['name']?.toString() ?? '';
+
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _getItem(
-              item['icon'] as IconData,
-              item['name'] as String,
-              item['value'] as String,
+            Expanded(
+              child: _getItem(
+                context,
+                item['icon'] as IconData,
+                name,
+                item['value']?.toString() ?? '',
+              ),
             ),
             CircleAvatar(
               backgroundColor: Colors.transparent,
@@ -55,9 +55,7 @@ class _BottomsheetWidgetState extends State<BottomsheetWidget> {
                 icon: Icon(Mdi.contentCopy),
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  Clipboard.setData(
-                    ClipboardData(text: item['name'].toString()),
-                  );
+                  Clipboard.setData(ClipboardData(text: name));
                 },
               ),
             ),
@@ -67,7 +65,14 @@ class _BottomsheetWidgetState extends State<BottomsheetWidget> {
     );
   }
 
-  Widget _getItem(IconData icon, String title, String subtitle) {
+  Widget _getItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Row(
       children: [
         CircleAvatar(
@@ -75,21 +80,24 @@ class _BottomsheetWidgetState extends State<BottomsheetWidget> {
           child: Icon(icon),
         ),
         const SizedBox(width: 13),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall,
-              overflow: .ellipsis,
-              maxLines: 1,
-            ),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall,
-              overflow: .ellipsis,
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: textTheme.titleSmall,
+                overflow: .ellipsis,
+                maxLines: 1,
+              ),
+              Text(
+                subtitle,
+                style: textTheme.bodySmall,
+                overflow: .ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
         ),
       ],
     );

@@ -1,7 +1,6 @@
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:new_zhic_tool/widget/web_view_page.dart';
 
 class LeavePage extends StatefulWidget {
   const LeavePage({super.key});
@@ -11,9 +10,6 @@ class LeavePage extends StatefulWidget {
 }
 
 class _LeavePageState extends State<LeavePage> {
-  InAppWebViewController? _webViewController;
-  double _progress = 0;
-
   @override
   void initState() {
     super.initState();
@@ -22,46 +18,9 @@ class _LeavePageState extends State<LeavePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        final controller = _webViewController;
-        if (controller != null && await controller.canGoBack()) {
-          await controller.goBack();
-        } else {
-          if (context.mounted) {
-            Navigator.pop(context);
-          }
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('评教'),
-          bottom: _progress < 1.0
-              ? PreferredSize(
-                  preferredSize: const Size.fromHeight(3),
-                  child: M3ELinearProgressIndicator(value: _progress),
-                )
-              : null,
-        ),
-        body: InAppWebView(
-          initialUrlRequest: URLRequest(
-            url: WebUri("http://work.tjzhic.edu.cn:7565/dormitory/index"),
-          ),
-          onWebViewCreated: (controller) {
-            _webViewController = controller;
-          },
-          onProgressChanged: (controller, progress) {
-            if (!mounted) {
-              return;
-            }
-            setState(() {
-              _progress = progress / 100;
-            });
-          },
-        ),
-      ),
+    return const WebViewPage(
+      title: '请假',
+      url: 'http://work.tjzhic.edu.cn:7565/dormitory/index',
     );
   }
 }

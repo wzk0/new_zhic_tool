@@ -1,12 +1,10 @@
-import 'dart:ui' as ui;
-
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/icon.dart';
+import 'package:new_zhic_tool/core/share_boundary.dart';
 import 'package:new_zhic_tool/model/score.dart';
 import 'package:new_zhic_tool/provider/auth_notifier.dart';
 import 'package:new_zhic_tool/provider/score_provider.dart';
@@ -15,7 +13,6 @@ import 'package:new_zhic_tool/widget/bottomsheet_widget.dart';
 import 'package:new_zhic_tool/widget/empty_page.dart';
 import 'package:new_zhic_tool/widget/error_page.dart';
 import 'package:new_zhic_tool/widget/load_page.dart';
-import 'package:share_plus/share_plus.dart';
 
 class ScorePage extends ConsumerStatefulWidget {
   const ScorePage({super.key});
@@ -28,49 +25,7 @@ class _ScorePageState extends ConsumerState<ScorePage> {
   final _shareKey = GlobalKey();
 
   Future<void> _shareAsImage() async {
-    await WidgetsBinding.instance.endOfFrame;
-
-    if (!mounted) return;
-
-    final renderObject = _shareKey.currentContext?.findRenderObject();
-
-    if (renderObject is! RenderRepaintBoundary) {
-      return;
-    }
-
-    final image = await renderObject.toImage(pixelRatio: 3.0);
-
-    try {
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-      if (byteData == null) {
-        return;
-      }
-
-      final pngBytes = byteData.buffer.asUint8List();
-
-      if (!mounted) return;
-
-      final renderBox = context.findRenderObject();
-
-      Rect? sharePositionOrigin;
-
-      if (renderBox is RenderBox) {
-        sharePositionOrigin =
-            renderBox.localToGlobal(Offset.zero) & renderBox.size;
-      }
-
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [
-            XFile.fromData(pngBytes, mimeType: 'image/png', name: '成绩单.png'),
-          ],
-          sharePositionOrigin: sharePositionOrigin,
-        ),
-      );
-    } finally {
-      image.dispose();
-    }
+    await shareBoundaryImage(context, _shareKey, fileName: '成绩单.png');
   }
 
   @override

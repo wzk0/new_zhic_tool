@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:new_zhic_tool/core/avatar_spin.dart';
 import 'package:new_zhic_tool/core/debug.dart';
 import 'package:new_zhic_tool/core/icon.dart';
 import 'package:new_zhic_tool/model/semester_config.dart';
@@ -21,9 +22,9 @@ import 'package:new_zhic_tool/page/question_bank_page.dart';
 import 'package:new_zhic_tool/page/score_page.dart';
 import 'package:new_zhic_tool/page/training_plan_page.dart';
 import 'package:new_zhic_tool/page/xuexinwang_page.dart';
+import 'package:new_zhic_tool/provider/auth_notifier.dart';
 import 'package:new_zhic_tool/provider/schedule_notifier.dart';
 import 'package:new_zhic_tool/widget/chip_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class DrawerItemConfig {
   final IconData icon;
@@ -49,12 +50,10 @@ class DrawerWidget extends ConsumerStatefulWidget {
 class _DrawerWidgetState extends ConsumerState<DrawerWidget>
     with SingleTickerProviderStateMixin {
   late final M3EDropdownController<String> _semesterController;
-  late AnimationController _animationController;
+  late final AvatarSpinController _spin;
   bool _syncingDropdown = false;
 
   List<SemesterConfig> _dropdownSemesters = const [];
-  int _clickCount = 0;
-  bool _isLoggedInCache = false;
 
   static const String _kPrefsClickCount = 'drawer_avatar_click_count';
   static const String _kPrefsAnimationValue = 'drawer_avatar_animation_value';
@@ -161,14 +160,16 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this);
+    _spin = AvatarSpinController(
+      vsync: this,
+      clickCountKey: _kPrefsClickCount,
+      animationValueKey: _kPrefsAnimationValue,
+    );
     _semesterController = M3EDropdownController<String>();
 
     _loadSavedState();
-    _checkLoginStatus();
 
     ref.listenManual<ScheduleState>(scheduleProvider, (previous, next) {
-      _checkLoginStatus();
       final previousSemesters = previous?.semesters ?? const [];
       final currentSemesters = next.semesters;
       final previousId = previous?.currentSemester?.id;
@@ -197,47 +198,19 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
   }
 
   Future<void> _loadSavedState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedCount = prefs.getInt(_kPrefsClickCount) ?? 0;
-      final savedValue = prefs.getDouble(_kPrefsAnimationValue) ?? 0.0;
-      if (savedCount > 0 && mounted) {
-        setState(() {
-          _clickCount = savedCount;
-        });
-        final durationMs = (15000 / _clickCount).clamp(30, 15000).toInt();
-        _animationController.duration = Duration(milliseconds: durationMs);
-        _animationController.value = savedValue.clamp(0.0, 1.0);
-        _animationController.repeat();
-      }
-    } catch (_) {}
-  }
+    await _spin.restore();
 
-  Future<void> _saveState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_kPrefsClickCount, _clickCount);
-      await prefs.setDouble(_kPrefsAnimationValue, _animationController.value);
-    } catch (_) {}
-  }
+    if (!mounted || !_spin.isSpinning) {
+      return;
+    }
 
-  Future<void> _checkLoginStatus() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final loggedIn = prefs.getBool('is_logged_in') ?? false;
-      if (mounted && _isLoggedInCache != loggedIn) {
-        setState(() {
-          _isLoggedInCache = loggedIn;
-        });
-      }
-    } catch (_) {}
+    setState(() {});
   }
 
   @override
   void dispose() {
-    _saveState();
+    _spin.dispose();
     _semesterController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -288,7 +261,7 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
   @override
   Widget build(BuildContext context) {
     final schedule = ref.watch(scheduleProvider);
-    _checkLoginStatus();
+    final isLoggedIn = ref.watch(authProvider);
 
     return Drawer(
       child: Padding(
@@ -298,7 +271,7 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
             SizedBox(height: MediaQuery.paddingOf(context).top),
             _buildSemesterDropdown(context, ref, schedule),
             const SizedBox(height: 16),
-            _buildAvatar(context, schedule),
+            _buildAvatar(context, schedule, isLoggedIn: isLoggedIn),
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
@@ -398,12 +371,14 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
     );
   }
 
-  Widget _buildAvatar(BuildContext context, ScheduleState schedule) {
+  Widget _buildAvatar(
+    BuildContext context,
+    ScheduleState schedule, {
+    required bool isLoggedIn,
+  }) {
     final student = schedule.studentInfo;
     final bool hasValidStudent =
-        _isLoggedInCache &&
-        student.name.trim().isNotEmpty &&
-        student.name != '未登入';
+        isLoggedIn && student.name.trim().isNotEmpty && student.name != '未登入';
 
     final name = hasValidStudent
         ? student.name
@@ -427,32 +402,20 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
         GestureDetector(
           onTap: () {
             HapticFeedback.lightImpact();
-            setState(() {
-              _clickCount++;
-            });
-            final durationMs = (15000 / _clickCount).clamp(30, 15000).toInt();
-            _animationController.duration = Duration(milliseconds: durationMs);
-            _animationController.repeat();
-            _clickCount < 500
-                ? Fluttertoast.showToast(
-                    msg: '当前旋转等级: $_clickCount (${durationMs}ms/圈)',
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                  )
-                : Fluttertoast.showToast(
-                    msg: '当前旋转等级: $_clickCount (已达极限)',
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                  );
-            _saveState();
+            final durationMs = _spin.registerClick();
+            setState(() {});
+            Fluttertoast.showToast(
+              msg: _spin.clickCount < 500
+                  ? '当前旋转等级: ${_spin.clickCount} (${durationMs}ms/圈)'
+                  : '当前旋转等级: ${_spin.clickCount} (已达极限)',
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+            );
           },
           onLongPress: () async {
             HapticFeedback.heavyImpact();
-            setState(() {
-              _clickCount = 0;
-            });
-            _animationController.stop();
-            await _saveState();
+            _spin.reset();
+            setState(() {});
             if (!context.mounted) return;
 
             Fluttertoast.showToast(
@@ -469,11 +432,8 @@ class _DrawerWidgetState extends ConsumerState<DrawerWidget>
               ),
             );
           },
-          child: _clickCount > 0
-              ? RotationTransition(
-                  turns: _animationController,
-                  child: avatarWidget,
-                )
+          child: _spin.isSpinning
+              ? RotationTransition(turns: _spin.turns, child: avatarWidget)
               : avatarWidget,
         ),
         const SizedBox(width: 12),

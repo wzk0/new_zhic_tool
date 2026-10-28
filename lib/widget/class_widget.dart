@@ -1,6 +1,3 @@
-import 'dart:ui' as ui;
-
-import 'package:flutter/rendering.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/debug.dart';
@@ -52,21 +49,13 @@ class ClassWidget extends StatelessWidget {
     '19:25',
   ];
 
-  Future<ui.Image> capture({double pixelRatio = 3.0}) async {
-    final context = captureKey?.currentContext;
-
-    if (context == null) {
-      throw StateError('ClassWidget 尚未完成渲染, 无法截图.');
-    }
-
-    final renderObject = context.findRenderObject();
-
-    if (renderObject is! RenderRepaintBoundary) {
-      throw StateError('captureKey 没有绑定到 RenderRepaintBoundary.');
-    }
-
-    return renderObject.toImage(pixelRatio: pixelRatio);
-  }
+  /// [times] 对应的分钟刻度, 用于判断当前节次, 避免每次重建重复解析字符串。
+  static final List<int> _unitStartMinutes = times
+      .map((time) {
+        final parts = time.split(':');
+        return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+      })
+      .toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +66,16 @@ class ClassWidget extends StatelessWidget {
         .map((course) => course.normalized(totalUnits: totalUnits))
         .whereType<Course>()
         .toList();
+
+    final coursesByWeekday = <int, List<Course>>{};
+
+    for (final course in validCourses) {
+      (coursesByWeekday[course.weekday] ??= <Course>[]).add(course);
+    }
+
+    for (final dayCourses in coursesByWeekday.values) {
+      dayCourses.sort(_compareCourse);
+    }
 
     final todayWeekday = now.weekday;
 
@@ -94,7 +93,7 @@ class ClassWidget extends StatelessWidget {
                 context,
                 weekday: i + 1,
                 date: monday.add(Duration(days: i)),
-                courses: validCourses,
+                courses: coursesByWeekday[i + 1] ?? const <Course>[],
                 isToday: (i + 1) == todayWeekday,
               ),
             ),
@@ -134,13 +133,11 @@ class ClassWidget extends StatelessWidget {
   int? _getCurrentUnit(DateTime now) {
     final currentMinutes = now.hour * 60 + now.minute;
 
-    for (int i = 0; i < times.length; i++) {
-      final start = _parseTime(times[i]);
+    for (var i = 0; i < _unitStartMinutes.length; i++) {
+      final startMinutes = _unitStartMinutes[i];
 
-      final startMinutes = start.hour * 60 + start.minute;
-
-      final endMinutes = i + 1 < times.length
-          ? _parseTime(times[i + 1]).hour * 60 + _parseTime(times[i + 1]).minute
+      final endMinutes = i + 1 < _unitStartMinutes.length
+          ? _unitStartMinutes[i + 1]
           : 24 * 60;
 
       if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
@@ -149,12 +146,6 @@ class ClassWidget extends StatelessWidget {
     }
 
     return null;
-  }
-
-  TimeOfDay _parseTime(String value) {
-    final parts = value.split(':');
-
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
   Widget _buildTimeColumn(BuildContext context, {required DateTime now}) {
@@ -213,27 +204,20 @@ class ClassWidget extends StatelessWidget {
                                 unit.toString(),
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: isCurrent
-                                          ? colorScheme.tertiary
-                                          : colorScheme.primary,
-                                      fontWeight: isCurrent
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
+                                    ?.copyWith(color: colorScheme.primary),
                               ),
                         Text(
                           times[index],
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isCurrent
-                                ? colorScheme.tertiary
-                                : colorScheme.outline,
-                            fontWeight: isCurrent
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: isCurrent
+                                    ? colorScheme.tertiary
+                                    : colorScheme.outline,
+                                fontWeight: isCurrent
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
                         ),
                       ],
                     ),
@@ -247,6 +231,16 @@ class ClassWidget extends StatelessWidget {
     );
   }
 
+  static int _compareCourse(Course a, Course b) {
+    final result = a.startUnit.compareTo(b.startUnit);
+
+    if (result != 0) {
+      return result;
+    }
+
+    return b.endUnit.compareTo(a.endUnit);
+  }
+
   Widget _buildDayColumn(
     BuildContext context, {
     required int weekday,
@@ -255,18 +249,6 @@ class ClassWidget extends StatelessWidget {
     required bool isToday,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    final dayCourses =
-        courses.where((course) => course.weekday == weekday).toList()
-          ..sort((a, b) {
-            final result = a.startUnit.compareTo(b.startUnit);
-
-            if (result != 0) {
-              return result;
-            }
-
-            return b.endUnit.compareTo(a.endUnit);
-          });
 
     return Column(
       children: [
@@ -305,20 +287,13 @@ class ClassWidget extends StatelessWidget {
                     )
                   : Text(
                       weekDays[weekday - 1],
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: isToday
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: isToday
-                            ? colorScheme.tertiary
-                            : colorScheme.primary,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.primary),
                     ),
               Text(
                 '${date.month}/${date.day}',
-                style: TextStyle(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: isToday ? colorScheme.tertiary : colorScheme.outline,
-                  fontSize: 10,
                 ),
               ),
             ],
@@ -330,7 +305,7 @@ class ClassWidget extends StatelessWidget {
         Expanded(
           child: _buildCourseColumn(
             context,
-            courses: dayCourses,
+            courses: courses,
             isToday: isToday,
           ),
         ),

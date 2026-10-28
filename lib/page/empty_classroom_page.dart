@@ -10,6 +10,7 @@ import 'package:new_zhic_tool/provider/schedule_notifier.dart';
 import 'package:new_zhic_tool/widget/empty_page.dart';
 import 'package:new_zhic_tool/widget/error_page.dart';
 import 'package:new_zhic_tool/widget/load_page.dart';
+import 'package:new_zhic_tool/widget/occupation_table.dart';
 
 class EmptyClassroomPage extends ConsumerStatefulWidget {
   const EmptyClassroomPage({super.key});
@@ -247,8 +248,6 @@ class RoomOccupationCard extends StatelessWidget {
   final EmptyRoom room;
   final VoidCallback onTap;
 
-  static const List<String> _weekdays = ['一', '二', '三', '四', '五', '六', '日'];
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -265,9 +264,9 @@ class RoomOccupationCard extends StatelessWidget {
           children: [
             _buildHeader(context, colorScheme),
             const SizedBox(height: 16),
-            _buildOccupationTable(context, colorScheme),
+            RoomOccupationTable(occupations: room.occupations, dense: true),
             const SizedBox(height: 12),
-            _buildLegend(context, colorScheme),
+            const Center(child: OccupationLegend(dense: true)),
           ],
         ),
       ),
@@ -319,112 +318,5 @@ class RoomOccupationCard extends StatelessWidget {
       return match.group(0)!;
     }
     return name;
-  }
-
-  Widget _buildOccupationTable(BuildContext context, ColorScheme colorScheme) {
-    final textTheme = Theme.of(context).textTheme;
-    return Table(
-      columnWidths: const {0: FixedColumnWidth(22)},
-      children: [
-        TableRow(
-          children: [
-            const SizedBox(),
-            ..._weekdays.map((day) {
-              return Center(
-                child: Text(
-                  '周$day',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.outline,
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-        ...List.generate(12, (unitIndex) {
-          final unit = unitIndex + 1;
-          return TableRow(
-            children: [
-              SizedBox(
-                height: 27,
-                child: Center(
-                  child: Text(
-                    unit.toString(),
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colorScheme.outline,
-                    ),
-                  ),
-                ),
-              ),
-              ...List.generate(7, (weekdayIndex) {
-                final weekday = weekdayIndex + 1;
-                final occupation = room.occupations.any((occupation) {
-                  return occupation.weekday == weekday &&
-                      occupation.unit == unit &&
-                      occupation.isBusy;
-                });
-
-                return Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Container(
-                    height: 23,
-                    decoration: BoxDecoration(
-                      color: occupation
-                          ? colorScheme.errorContainer
-                          : colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Center(child: Text(occupation ? '' : '✅')),
-                  ),
-                );
-              }),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildLegend(BuildContext context, ColorScheme colorScheme) {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        LegendItem(colorSchemeKey: true, label: '空闲'),
-        SizedBox(width: 24),
-        LegendItem(colorSchemeKey: false, label: '占用'),
-      ],
-    );
-  }
-}
-
-class LegendItem extends StatelessWidget {
-  const LegendItem({
-    super.key,
-    required this.colorSchemeKey,
-    required this.label,
-  });
-
-  final bool colorSchemeKey;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final color = colorSchemeKey
-        ? colorScheme.tertiaryContainer
-        : colorScheme.errorContainer;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
-      ],
-    );
   }
 }

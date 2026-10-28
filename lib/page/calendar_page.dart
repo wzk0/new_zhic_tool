@@ -241,14 +241,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 
   void _showFullScreenImage(BuildContext context, File file) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: colorScheme.surface,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
-            iconTheme: const IconThemeData(color: Colors.white),
+            foregroundColor: colorScheme.onSurface,
             elevation: 0,
           ),
           body: Center(
@@ -302,9 +304,8 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                   alignment: Alignment.center,
                   child: Text(
                     '图片加载失败',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: Theme.of(context).colorScheme.error),
                   ),
                 );
               },

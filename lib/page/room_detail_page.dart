@@ -1,13 +1,11 @@
-import 'dart:ui' as ui;
-
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:new_zhic_tool/core/icon.dart';
+import 'package:new_zhic_tool/core/share_boundary.dart';
 import 'package:new_zhic_tool/model/empty_room.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:new_zhic_tool/widget/occupation_table.dart';
 
 class RoomDetailPage extends StatefulWidget {
   const RoomDetailPage({super.key, required this.room});
@@ -24,53 +22,11 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
   final _shareKey = GlobalKey();
 
   Future<void> _shareAsImage() async {
-    await WidgetsBinding.instance.endOfFrame;
-
-    if (!mounted) return;
-
-    final renderObject = _shareKey.currentContext?.findRenderObject();
-
-    if (renderObject is! RenderRepaintBoundary) {
-      return;
-    }
-
-    final image = await renderObject.toImage(pixelRatio: 3.0);
-
-    try {
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-      if (byteData == null) {
-        return;
-      }
-
-      final pngBytes = byteData.buffer.asUint8List();
-
-      if (!mounted) return;
-
-      final renderBox = context.findRenderObject();
-
-      Rect? sharePositionOrigin;
-
-      if (renderBox is RenderBox) {
-        sharePositionOrigin =
-            renderBox.localToGlobal(Offset.zero) & renderBox.size;
-      }
-
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [
-            XFile.fromData(
-              pngBytes,
-              mimeType: 'image/png',
-              name: '${widget.room.roomName}.png',
-            ),
-          ],
-          sharePositionOrigin: sharePositionOrigin,
-        ),
-      );
-    } finally {
-      image.dispose();
-    }
+    await shareBoundaryImage(
+      context,
+      _shareKey,
+      fileName: '${widget.room.roomName}.png',
+    );
   }
 
   @override
@@ -157,13 +113,19 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                     children: [
                       _buildShareHeader(context),
                       const SizedBox(height: 16),
-                      _buildLegend(context),
-                      const SizedBox(height: 20),
-                      _buildOccupationTable(
-                        context,
-                        colorScheme,
-                        widget.room.occupations,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const OccupationLegend(),
                       ),
+                      const SizedBox(height: 20),
+                      RoomOccupationTable(occupations: widget.room.occupations),
                     ],
                   ),
                 ),
@@ -200,7 +162,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
     );
   }
 
-  Widget _buildPart(List<Widget> children, List copyList) {
+  Widget _buildPart(List<Widget> children, List<String> copyList) {
     return M3ESegmentedList(
       itemCount: children.length,
       onTap: (index) {
@@ -227,9 +189,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                 onPressed: () {
                   HapticFeedback.lightImpact();
 
-                  Clipboard.setData(
-                    ClipboardData(text: copyList[index].toString()),
-                  );
+                  Clipboard.setData(ClipboardData(text: copyList[index]));
                 },
               ),
             ),
@@ -253,115 +213,6 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
             Text(title, style: Theme.of(context).textTheme.titleSmall),
             Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOccupationTable(
-    BuildContext context,
-    ColorScheme colorScheme,
-    List<RoomOccupation> occupations,
-  ) {
-    return Table(
-      columnWidths: const {0: FixedColumnWidth(35)},
-      children: [
-        TableRow(
-          children: [
-            const SizedBox(height: 25),
-            ...RoomDetailPage.weeks.map(
-              (week) => Center(
-                child: Text(
-                  '周$week',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.outline,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        ...List.generate(12, (unitIndex) {
-          final unit = unitIndex + 1;
-
-          return TableRow(
-            children: [
-              SizedBox(
-                height: 38,
-                child: Center(
-                  child: Text(
-                    '$unit',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.outline,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              ...List.generate(7, (weekdayIndex) {
-                final weekday = weekdayIndex + 1;
-
-                final isBusy = occupations.any(
-                  (occupation) =>
-                      occupation.weekday == weekday &&
-                      occupation.unit == unit &&
-                      occupation.isBusy,
-                );
-
-                return Container(
-                  height: 34,
-                  margin: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: isBusy
-                        ? colorScheme.errorContainer
-                        : colorScheme.tertiaryContainer,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Center(child: Text(isBusy ? '' : '✅')),
-                );
-              }),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildLegend(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _legendDot(colorScheme.tertiaryContainer, '空闲'),
-          const SizedBox(width: 32),
-          _legendDot(colorScheme.errorContainer, '占用'),
-        ],
-      ),
-    );
-  }
-
-  Widget _legendDot(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
       ],
     );

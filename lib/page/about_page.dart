@@ -8,10 +8,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:m3e_core/m3e_core.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:new_zhic_tool/core/avatar_spin.dart';
 import 'package:new_zhic_tool/core/icon.dart';
 import 'package:new_zhic_tool/widget/chip_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 class AboutPage extends StatefulWidget {
@@ -24,9 +24,9 @@ class _AboutPageState extends State<AboutPage>
     with SingleTickerProviderStateMixin {
   String _currentVersion = 'v2.0.2';
   bool _isChecking = false;
-  int _clickCount = 0;
 
-  late AnimationController _animationController;
+  /// 头像旋转彩蛋的状态。
+  late final AvatarSpinController _spin;
 
   static const String _kPrefsClickCount = 'about_icon_click_count';
   static const String _kPrefsAnimationValue = 'about_icon_animation_value';
@@ -46,7 +46,11 @@ class _AboutPageState extends State<AboutPage>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this);
+    _spin = AvatarSpinController(
+      vsync: this,
+      clickCountKey: _kPrefsClickCount,
+      animationValueKey: _kPrefsAnimationValue,
+    );
     _loadSavedState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPackageInfo();
@@ -54,34 +58,18 @@ class _AboutPageState extends State<AboutPage>
   }
 
   Future<void> _loadSavedState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedCount = prefs.getInt(_kPrefsClickCount) ?? 0;
-      final savedValue = prefs.getDouble(_kPrefsAnimationValue) ?? 0.0;
-      if (savedCount > 0 && mounted) {
-        setState(() {
-          _clickCount = savedCount;
-        });
-        final durationMs = (15000 / _clickCount).clamp(30, 15000).toInt();
-        _animationController.duration = Duration(milliseconds: durationMs);
-        _animationController.value = savedValue.clamp(0.0, 1.0);
-        _animationController.repeat();
-      }
-    } catch (_) {}
-  }
+    await _spin.restore();
 
-  Future<void> _saveState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_kPrefsClickCount, _clickCount);
-      await prefs.setDouble(_kPrefsAnimationValue, _animationController.value);
-    } catch (_) {}
+    if (!mounted || !_spin.isSpinning) {
+      return;
+    }
+
+    setState(() {});
   }
 
   @override
   void dispose() {
-    _saveState();
-    _animationController.dispose();
+    _spin.dispose();
     super.dispose();
   }
 
@@ -204,30 +192,20 @@ class _AboutPageState extends State<AboutPage>
       context,
       options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
     );
-    setState(() {
-      _clickCount++;
-    });
-    final durationMs = (15000 / _clickCount).clamp(30, 15000).toInt();
-    _animationController.duration = Duration(milliseconds: durationMs);
-    _animationController.repeat();
-    _saveState();
+    _spin.registerClick();
+    setState(() {});
 
-    String message;
-    if (_clickCount % 3 == 0) {
-      message = '你已经点了 $_clickCount 次了, 不累吗? ';
-    } else {
-      message = _funQuotes[Random().nextInt(_funQuotes.length)];
-    }
+    final clickCount = _spin.clickCount;
+    final message = clickCount % 3 == 0
+        ? '你已经点了 $clickCount 次了, 不累吗? '
+        : _funQuotes[Random().nextInt(_funQuotes.length)];
     Fluttertoast.showToast(msg: message);
   }
 
-  Future<void> _onIconLongPress() async {
+  void _onIconLongPress() {
     HapticFeedback.heavyImpact();
-    setState(() {
-      _clickCount = 0;
-    });
-    _animationController.stop();
-    await _saveState();
+    _spin.reset();
+    setState(() {});
     if (!mounted) return;
 
     Fluttertoast.showToast(
@@ -289,11 +267,17 @@ class _AboutPageState extends State<AboutPage>
 
           M3ESegmentedColumn(
             children: [
-              _buildActionCard(context, icon: Mdi.codeBraces, title: '项目源代码'),
+              _buildActionCard(
+                context,
+                icon: Mdi.codeBraces,
+                title: '项目源代码',
+                subtitle: '在 GitHub 查看并参与开发',
+              ),
               _buildActionCard(
                 context,
                 icon: Mdi.update,
                 title: '检查更新',
+                subtitle: '从 GitHub Release 检查新版本',
                 isLoading: _isChecking,
               ),
             ],
@@ -343,11 +327,8 @@ class _AboutPageState extends State<AboutPage>
         GestureDetector(
           onTap: _onIconTap,
           onLongPress: _onIconLongPress,
-          child: _clickCount > 0
-              ? RotationTransition(
-                  turns: _animationController,
-                  child: iconContainer,
-                )
+          child: _spin.isSpinning
+              ? RotationTransition(turns: _spin.turns, child: iconContainer)
               : iconContainer,
         ),
         const SizedBox(height: 16),
@@ -397,35 +378,45 @@ class _AboutPageState extends State<AboutPage>
     BuildContext context, {
     required IconData icon,
     required String title,
+    required String subtitle,
     bool isLoading = false,
   }) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Row(
       mainAxisAlignment: .spaceBetween,
       children: [
-        Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-              child: Icon(icon),
-            ),
-            const SizedBox(width: 13),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                  overflow: .ellipsis,
-                  maxLines: 1,
+        Expanded(
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .secondaryContainer,
+                child: Icon(icon),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: textTheme.titleSmall,
+                      overflow: .ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text(
+                      subtitle,
+                      style: textTheme.bodySmall,
+                      overflow: .ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
                 ),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  overflow: .ellipsis,
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
         CircleAvatar(
           backgroundColor: Colors.transparent,

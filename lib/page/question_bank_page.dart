@@ -11,6 +11,52 @@ import 'package:new_zhic_tool/widget/error_page.dart';
 import 'package:new_zhic_tool/widget/load_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// 目录与根页共用的导航逻辑。
+void _openDirectory(BuildContext context, _GiteeItem item) {
+  HapticFeedback.lightImpact();
+
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) =>
+          _QuestionBankDirectoryPage(name: item.name, items: item.children),
+    ),
+  );
+}
+
+Future<void> _openFile(BuildContext context) async {
+  HapticFeedback.lightImpact();
+
+  Confetti.launch(
+    context,
+    options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
+  );
+}
+
+Future<void> _downloadFile(BuildContext context, _GiteeItem item) async {
+  HapticFeedback.lightImpact();
+
+  final rawUrl = _GiteeApi.buildRawUrl(item.path);
+
+  final success = await launchUrl(
+    Uri.parse(rawUrl),
+    mode: LaunchMode.externalApplication,
+  );
+
+  if (!success && context.mounted) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('无法打开默认浏览器')));
+  }
+}
+
+Future<void> _onTap(BuildContext context, _GiteeItem item) async {
+  if (item.isDirectory) {
+    _openDirectory(context, item);
+    return;
+  }
+
+  await _openFile(context);
+}
+
 class QuestionBankPage extends ConsumerStatefulWidget {
   const QuestionBankPage({super.key});
 
@@ -63,51 +109,6 @@ class _QuestionBankPageState extends ConsumerState<QuestionBankPage> {
     }
   }
 
-  void _openDirectory(_GiteeItem item) {
-    HapticFeedback.lightImpact();
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            _QuestionBankDirectoryPage(name: item.name, items: item.children),
-      ),
-    );
-  }
-
-  Future<void> _openFile(_GiteeItem item) async {
-    HapticFeedback.lightImpact();
-
-    Confetti.launch(
-      context,
-      options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
-    );
-  }
-
-  Future<void> _downloadFile(_GiteeItem item) async {
-    HapticFeedback.lightImpact();
-
-    final rawUrl = _GiteeApi.buildRawUrl(item.path);
-
-    final success = await launchUrl(
-      Uri.parse(rawUrl),
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!success && mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('无法打开默认浏览器')));
-    }
-  }
-
-  Future<void> _onTap(_GiteeItem item) async {
-    if (item.isDirectory) {
-      _openDirectory(item);
-      return;
-    }
-
-    await _openFile(item);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,8 +120,8 @@ class _QuestionBankPageState extends ConsumerState<QuestionBankPage> {
         emptyIcon: Mdi.fileQuestionOutline,
         emptyTitle: '暂无题库',
         emptySubtitle: '题库文件会显示在这里',
-        onTap: _onTap,
-        onDownload: _downloadFile,
+        onTap: (item) => _onTap(context, item),
+        onDownload: (item) => _downloadFile(context, item),
       ),
     );
   }
@@ -131,51 +132,6 @@ class _QuestionBankDirectoryPage extends StatelessWidget {
 
   final String name;
   final List<_GiteeItem> items;
-
-  void _openDirectory(BuildContext context, _GiteeItem item) {
-    HapticFeedback.lightImpact();
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            _QuestionBankDirectoryPage(name: item.name, items: item.children),
-      ),
-    );
-  }
-
-  Future<void> _openFile(BuildContext context, _GiteeItem item) async {
-    HapticFeedback.lightImpact();
-
-    Confetti.launch(
-      context,
-      options: const ConfettiOptions(particleCount: 150, spread: 70, y: 0.7),
-    );
-  }
-
-  Future<void> _downloadFile(BuildContext context, _GiteeItem item) async {
-    HapticFeedback.lightImpact();
-
-    final rawUrl = _GiteeApi.buildRawUrl(item.path);
-
-    final success = await launchUrl(
-      Uri.parse(rawUrl),
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!success && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('无法打开默认浏览器')));
-    }
-  }
-
-  Future<void> _onTap(BuildContext context, _GiteeItem item) async {
-    if (item.isDirectory) {
-      _openDirectory(context, item);
-      return;
-    }
-
-    await _openFile(context, item);
-  }
 
   @override
   Widget build(BuildContext context) {
