@@ -1,6 +1,6 @@
 name: new_zhic_tool
 description: "A new zhic tool."
-version: 2.0.2
+version: 2.0.3
 
 environment:
   sdk: ^3.13.2

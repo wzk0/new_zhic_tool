@@ -23,7 +23,7 @@ class AboutPage extends StatefulWidget {
 
 class _AboutPageState extends State<AboutPage>
     with SingleTickerProviderStateMixin {
-  String _currentVersion = 'v2.0.2';
+  String _currentVersion = 'v2.0.3';
   bool _isChecking = false;
 
   /// 头像旋转彩蛋的状态。
